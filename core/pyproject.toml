@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "alleycat-core"
+version = "0.1.0"
+description = "Core packages of AlleyCat framework."
+authors = ["Xavier Cho <mysticfallband@gmail.com>"]
+license = "GNU General Public License Version 3"
+packages = [
+    { include = "alleycat" }
+]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+returns = "^0.18.0"
+rx = "^3.2.0"
+validator-collection = "^1.5.0"
+dependency-injector = "^4.38.0"
+
+[tool.poetry.dev-dependencies]
+upbge-stubs = { version = "^0.3.1", allow-prereleases = true }
+pytest = "^7.0.1"
+pytest-mock = "^3.7.0"
+mypy = "^0.931"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
