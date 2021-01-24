@@ -1,0 +1,60 @@
+{
+  "input": {
+    "general": {
+      "menu": {
+        "type": "trigger",
+        "name": "Show Menu",
+        "description": "Toggle the main menu.",
+        "input": {
+          "type": "key_press",
+          "keycode": "ESCKEY"
+        }
+      }
+    },
+    "view": {
+      "rotate": {
+        "type": "axis",
+        "name": "Look Around",
+        "description": "Rotate the current view.",
+        "input": {
+          "x": {
+            "type": "mouse_axis",
+            "axis": "x"
+          },
+          "y": {
+            "type": "mouse_axis",
+            "axis": "y"
+          }
+        }
+      }
+    }
+  },
+  "logging": {
+    "version": 1,
+    "loggers": {
+      "root": {
+        "level": "DEBUG",
+        "handlers": [
+          "stdout",
+          "console"
+        ]
+      }
+    },
+    "formatters": {
+      "simple": {
+        "format": "[%(levelname)s] %(name)s - %(message)s"
+      }
+    },
+    "handlers": {
+      "stdout": {
+        "class": "logging.StreamHandler",
+        "formatter": "simple",
+        "stream": "ext://sys.stdout"
+      },
+      "console": {
+        "class": "alleycat.log.ConsoleLogger",
+        "formatter": "simple"
+      }
+    }
+  }
+}

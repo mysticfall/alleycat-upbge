@@ -1,0 +1,22 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+"pipenv-setup" = "*"
+"pytest" = "*"
+"pytest-mock" = "*"
+"fake-bpy-module-2.91" = "*"
+"fake-bge-module-0.2.5" = "*"
+
+[packages]
+"mypy" = "0.790"
+"rx" = "3.1.1"
+"returns" = "0.15.0"
+"validator-collection" = "1.5.0"
+"dependency-injector" = "4.5.4"
+"alleycat-reactive" = "0.4.7"
+
+[requires]
+python_version = "3.9"
