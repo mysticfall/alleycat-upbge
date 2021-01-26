@@ -7,7 +7,7 @@ from validator_collection.errors import JSONValidationError
 
 from alleycat.event import EventLoopScheduler
 from alleycat.input import MouseButton, MouseButtonInput, MouseInputSource
-from tests.input import create_event
+from tests.input import InputState, create_event
 
 LEFTMOUSE: Final = 116
 
@@ -48,11 +48,13 @@ def source(mocker: MockerFixture, scheduler: EventLoopScheduler) -> MouseInputSo
 
 
 @mark.parametrize("button", MouseButton)
+@mark.parametrize("repeat", (True, False))
 @mark.parametrize("enabled", (True, False))
-def test_from_config(button: MouseButton, enabled: bool, source: MouseInputSource):
+def test_from_config(button: MouseButton, repeat: bool, enabled: bool, source: MouseInputSource):
     config = {
         "type": "mouse_button",
         "button": button.name,
+        "repeat": repeat,
         "enabled": enabled
     }
 
@@ -61,6 +63,7 @@ def test_from_config(button: MouseButton, enabled: bool, source: MouseInputSourc
 
     assert input
     assert input.button == button
+    assert input.repeat == repeat
     assert input.enabled == enabled
 
 
@@ -126,19 +129,20 @@ def test_input(mocker: MockerFixture, source: MouseInputSource, scheduler: Event
         assert pressed == [False]
         assert not input.value
 
-        mouse.activeInputs = {LEFTMOUSE: create_event(status=[0, 1])}
+        mouse.activeInputs = {LEFTMOUSE: create_event(InputState.JustActivated)}
         scheduler.process()
 
         assert pressed == [False, True]
         assert input.value
 
-        mouse.activeInputs = {LEFTMOUSE: create_event(status=[1, 1]), RIGHTMOUSE: create_event(status=[0, 1])}
+        mouse.activeInputs = {
+            LEFTMOUSE: create_event(InputState.Active), RIGHTMOUSE: create_event(InputState.JustActivated)}
         scheduler.process()
 
         assert pressed == [False, True]
         assert input.value
 
-        mouse.activeInputs = {RIGHTMOUSE: create_event(status=[1, 1])}
+        mouse.activeInputs = {RIGHTMOUSE: create_event(InputState.Active)}
         scheduler.process()
 
         assert pressed == [False, True, False]
@@ -161,7 +165,7 @@ def test_disabled_input(mocker: MockerFixture, source: MouseInputSource, schedul
         input.observe("value").subscribe(pressed.append)
 
         input.enabled = False
-        mouse.activeInputs = {RIGHTMOUSE: create_event(status=[0, 1])}
+        mouse.activeInputs = {RIGHTMOUSE: create_event(InputState.JustActivated)}
 
         scheduler.process()
 
@@ -175,9 +179,47 @@ def test_disabled_input(mocker: MockerFixture, source: MouseInputSource, schedul
         assert not input.value
 
         input.enabled = True
-        mouse.activeInputs = {RIGHTMOUSE: create_event(status=[1, 1])}
+        mouse.activeInputs = {RIGHTMOUSE: create_event(InputState.Active)}
 
         scheduler.process()
 
         assert pressed == [False, True]
         assert input.value
+
+
+@mark.parametrize("repeat", (True, False))
+def test_repeat(repeat: bool, mocker: MockerFixture, source: MouseInputSource, scheduler: EventLoopScheduler):
+    pressed = []
+
+    mouse = mocker.patch("bge.logic.mouse")
+
+    # noinspection PyShadowingBuiltins
+    with MouseButtonInput(MouseButton.RIGHT, source, repeat=repeat) as input:
+        input.observe("value").subscribe(pressed.append)
+
+        mouse.activeInputs = {RIGHTMOUSE: create_event(InputState.JustActivated)}
+
+        scheduler.process()
+
+        mouse.activeInputs = {RIGHTMOUSE: create_event(InputState.Active)}
+
+        scheduler.process()
+
+        mouse.activeInputs = {
+            LEFTMOUSE: create_event(InputState.JustActivated), RIGHTMOUSE: create_event(InputState.Active)}
+
+        scheduler.process()
+
+        mouse.activeInputs = {
+            LEFTMOUSE: create_event(InputState.Active), RIGHTMOUSE: create_event(InputState.Released)}
+
+        scheduler.process()
+
+        mouse.activeInputs = {LEFTMOUSE: create_event(InputState.Active)}
+
+        scheduler.process()
+
+        if repeat:
+            assert pressed == [False, True, True, True, False, False]
+        else:
+            assert pressed == [False, True, False]

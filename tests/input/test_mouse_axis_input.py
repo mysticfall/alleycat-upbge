@@ -166,3 +166,27 @@ def test_input_with_pointer_shown(mocker: MockerFixture, source: MouseInputSourc
         scheduler.process()
 
         assert values == [0.0, -0.8]
+
+
+def test_input_repeat(mocker: MockerFixture, source: MouseInputSource, scheduler: EventLoopScheduler):
+    mouse = mocker.patch("bge.logic.mouse")
+
+    values = []
+
+    # noinspection PyShadowingBuiltins
+    with MouseAxisInput(Axis2D.Y, source) as input:
+        input.observe("value").subscribe(values.append)
+
+        mouse.position = (0.2, 0.3)
+        scheduler.process()
+
+        mouse.position = (0.2, 0.3)
+        scheduler.process()
+
+        mouse.position = (0.5, 0.5)
+        scheduler.process()
+
+        mouse.position = (0.5, 0.5)
+        scheduler.process()
+
+        assert values == [0.0, -0.4, -0.4, 0.0, 0.0]

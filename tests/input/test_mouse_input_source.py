@@ -7,7 +7,7 @@ from pytest_mock import MockerFixture
 
 from alleycat.event import EventLoopScheduler
 from alleycat.input import MouseButton, MouseInputSource
-from tests.input import create_event
+from tests.input import InputState, create_event
 
 LEFTMOUSE: Final = 116
 
@@ -63,33 +63,33 @@ def test_buttons(mocker: MockerFixture, source: MouseInputSource, scheduler: Eve
     buttons = []
 
     with source.observe("buttons").subscribe(buttons.append):
-        assert buttons == [0]
+        assert buttons == [set()]
 
-        mouse.activeInputs = {MouseButton.LEFT.event: create_event([KX_INPUT_ACTIVE])}
+        mouse.activeInputs = {MouseButton.LEFT.event: create_event(InputState.Active)}
 
         scheduler.process()
 
         assert len(buttons) == 2
-        assert buttons[1:] == [MouseButton.LEFT]
+        assert buttons[1:] == [{MouseButton.LEFT}]
 
         mouse.activeInputs = {
-            MouseButton.LEFT.event: create_event([KX_INPUT_ACTIVE]),
-            MouseButton.MIDDLE.event: create_event([KX_INPUT_JUST_ACTIVATED])}
+            MouseButton.LEFT.event: create_event(InputState.Active),
+            MouseButton.MIDDLE.event: create_event(InputState.JustActivated)}
 
         scheduler.process()
 
         assert len(buttons) == 3
-        assert buttons[2:] == [MouseButton.LEFT | MouseButton.MIDDLE]
+        assert buttons[2:] == [{MouseButton.LEFT, MouseButton.MIDDLE}]
 
         mouse.activeInputs = {
-            MouseButton.LEFT.event: create_event([KX_INPUT_JUST_RELEASED]),
-            MouseButton.MIDDLE.event: create_event([KX_INPUT_ACTIVE]),
-            MouseButton.RIGHT.event: create_event([KX_INPUT_JUST_ACTIVATED])}
+            MouseButton.LEFT.event: create_event(InputState.Released),
+            MouseButton.MIDDLE.event: create_event(InputState.Active),
+            MouseButton.RIGHT.event: create_event(InputState.JustActivated)}
 
         scheduler.process()
 
         assert len(buttons) == 4
-        assert buttons[3:] == [MouseButton.MIDDLE | MouseButton.RIGHT]
+        assert buttons[3:] == [{MouseButton.MIDDLE, MouseButton.RIGHT}]
 
 
 @mark.parametrize("button", MouseButton)
@@ -105,22 +105,22 @@ def test_on_button_press(
     with source.on_button_press(button).subscribe(pressed.append):
         assert pressed == []
 
-        mouse.activeInputs = {button.event: create_event([KX_INPUT_JUST_ACTIVATED])}
+        mouse.activeInputs = {button.event: create_event(InputState.JustActivated)}
         scheduler.process()
 
         assert pressed == [button]
 
-        mouse.activeInputs = {button.event: create_event([KX_INPUT_ACTIVE])}
+        mouse.activeInputs = {button.event: create_event(InputState.Active)}
         scheduler.process()
 
         assert pressed == [button]
 
-        mouse.activeInputs = {button.event: create_event([KX_INPUT_JUST_RELEASED])}
+        mouse.activeInputs = {button.event: create_event(InputState.Released)}
         scheduler.process()
 
         assert pressed == [button]
 
-        mouse.activeInputs = {button.event: create_event([KX_INPUT_JUST_ACTIVATED])}
+        mouse.activeInputs = {button.event: create_event(InputState.JustActivated)}
         scheduler.process()
 
         assert pressed == [button, button]
@@ -139,17 +139,17 @@ def test_on_button_release(
     with source.on_button_release(button).subscribe(released.append):
         assert released == []
 
-        mouse.activeInputs = {button.event: create_event([KX_INPUT_JUST_ACTIVATED])}
+        mouse.activeInputs = {button.event: create_event(InputState.JustActivated)}
         scheduler.process()
 
         assert released == []
 
-        mouse.activeInputs = {button.event: create_event([KX_INPUT_ACTIVE])}
+        mouse.activeInputs = {button.event: create_event(InputState.Active)}
         scheduler.process()
 
         assert released == []
 
-        mouse.activeInputs = {button.event: create_event([KX_INPUT_JUST_RELEASED])}
+        mouse.activeInputs = {button.event: create_event(InputState.Released)}
         scheduler.process()
 
         assert released == [button]
@@ -167,8 +167,6 @@ def test_position(mocker: MockerFixture, source: MouseInputSource, scheduler: Ev
     positions = []
 
     with source.observe("position").subscribe(positions.append):
-        scheduler.process()
-
         assert positions == [(0.5, 0.5)]
 
         mouse.position = (0.7, 0.2)
@@ -185,12 +183,12 @@ def test_on_wheel_move(mocker: MockerFixture, source: MouseInputSource, schedule
     with source.on_wheel_move.subscribe(scroll.append):
         assert scroll == []
 
-        mouse.activeInputs = {WHEELUPMOUSE: create_event([KX_INPUT_ACTIVE], values=(0, 1))}
+        mouse.activeInputs = {WHEELUPMOUSE: create_event(InputState.Active, values=(0, 1))}
         scheduler.process()
 
         assert scroll == [1]
 
-        mouse.activeInputs = {WHEELDOWNMOUSE: create_event([KX_INPUT_ACTIVE], values=(0, -1))}
+        mouse.activeInputs = {WHEELDOWNMOUSE: create_event(InputState.Active, values=(0, -1))}
         scheduler.process()
 
         assert scroll == [1, -1]

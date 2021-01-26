@@ -12,7 +12,7 @@ class Input(ReactiveObject, Generic[T], ABC):
 
     enabled: RP[bool] = rv.new_property()
 
-    def __init__(self, init_value: Optional[T] = None, enabled: bool = True) -> None:
+    def __init__(self, init_value: Optional[T] = None, repeat: bool = True, enabled: bool = True) -> None:
         super().__init__()
 
         operators = [ops.filter(lambda _: self.enabled)]
@@ -27,7 +27,10 @@ class Input(ReactiveObject, Generic[T], ABC):
         if init_value is not None:
             operators.append(ops.start_with(init_value))
 
-        operators.append(ops.distinct_until_changed())
+        if not repeat:
+            operators.append(ops.distinct_until_changed())
+
+        self._repeat = bool(repeat)
 
         # noinspection PyTypeChecker
         self.enabled = bool(enabled)
@@ -36,6 +39,10 @@ class Input(ReactiveObject, Generic[T], ABC):
     @property
     def modifiers(self) -> Sequence[Callable[[Observable], Observable]]:
         return ()
+
+    @property
+    def repeat(self) -> bool:
+        return self._repeat
 
     @abstractmethod
     def create(self) -> Observable:

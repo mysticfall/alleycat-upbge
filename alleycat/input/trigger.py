@@ -14,8 +14,8 @@ from alleycat.input import Input, InputBinding
 
 class TriggerInput(Input[bool], ABC):
 
-    def __init__(self, enabled: bool = True) -> None:
-        super().__init__(init_value=False, enabled=enabled)
+    def __init__(self, repeat: bool = False, enabled: bool = True) -> None:
+        super().__init__(init_value=False, repeat=repeat, enabled=enabled)
 
 
 class TriggerBinding(InputBinding):

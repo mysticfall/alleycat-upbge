@@ -75,13 +75,13 @@ class KeyInputSource(EventLoopAware, LoggingSupport):
 
 class KeyPressInput(TriggerInput):
 
-    def __init__(self, keycode: int, source: KeyInputSource, enabled: bool = True) -> None:
+    def __init__(self, keycode: int, source: KeyInputSource, repeat: bool = False, enabled: bool = True) -> None:
         bge.events.EventToString(keycode)
 
         self._keycode = keycode
         self._source = not_empty(source)
 
-        super().__init__(enabled=enabled)
+        super().__init__(repeat=repeat, enabled=enabled)
 
     @property
     def keycode(self) -> int:
@@ -92,10 +92,13 @@ class KeyPressInput(TriggerInput):
         return self._source
 
     def create(self) -> Observable:
-        pressed = self.source.on_key_press(self.keycode).pipe(ops.map(lambda _: True))
-        released = self.source.on_key_release(self.keycode).pipe(ops.map(lambda _: False))
+        if self.repeat:
+            return self.source.observe("pressed").pipe(ops.map(lambda p: self.keycode in p))
+        else:
+            pressed = self.source.on_key_press(self.keycode).pipe(ops.map(lambda _: True))
+            released = self.source.on_key_release(self.keycode).pipe(ops.map(lambda _: False))
 
-        return rx.merge(pressed, released)
+            return rx.merge(pressed, released)
 
     @classmethod
     def config_schema(cls) -> object:
@@ -110,6 +113,7 @@ class KeyPressInput(TriggerInput):
                         {"type": "number"}
                     ]
                 },
+                "repeat": {"type": "boolean"},
                 "enabled": {"type": "boolean"}
             },
             "required": ["type", "key"]
@@ -132,5 +136,6 @@ class KeyPressInput(TriggerInput):
             key = getattr(bge.events, key)
 
         enabled = "enabled" not in config or config["enabled"]
+        repeat = "repeat" in config and config["repeat"]
 
-        return KeyPressInput(key, source, enabled)
+        return KeyPressInput(key, source, repeat, enabled)

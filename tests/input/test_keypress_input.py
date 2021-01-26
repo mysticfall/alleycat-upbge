@@ -35,11 +35,13 @@ def source(mocker: MockerFixture, scheduler: EventLoopScheduler) -> KeyInputSour
 
 
 @mark.parametrize("keycode", (ESCKEY, ENTERKEY))
+@mark.parametrize("repeat", (True, False))
 @mark.parametrize("enabled", (True, False))
-def test_from_config(keycode: int, enabled: bool, source: KeyInputSource):
+def test_from_config(keycode: int, repeat: bool, enabled: bool, source: KeyInputSource):
     config = {
         "type": "key_press",
         "key": keycode,
+        "repeat": repeat,
         "enabled": enabled
     }
 
@@ -48,6 +50,7 @@ def test_from_config(keycode: int, enabled: bool, source: KeyInputSource):
 
     assert input
     assert input.keycode == keycode
+    assert input.repeat == repeat
     assert input.enabled == enabled
 
 
@@ -209,3 +212,30 @@ def test_disabled_input(mocker: MockerFixture, source: KeyInputSource, scheduler
 
         assert pressed == [False, True]
         assert input.value
+
+
+@mark.parametrize("repeat", (True, False))
+def test_repeat(repeat: bool, mocker: MockerFixture, source: KeyInputSource, scheduler: EventLoopScheduler):
+    pressed = []
+
+    keyboard = mocker.patch("bge.logic.keyboard")
+
+    # noinspection PyShadowingBuiltins
+    with KeyPressInput(ENTERKEY, source, repeat=repeat) as input:
+        input.observe("value").subscribe(pressed.append)
+
+        keyboard.activeInputs = {ENTERKEY: SCA_InputEvent()}
+
+        scheduler.process()
+        scheduler.process()
+        scheduler.process()
+
+        keyboard.activeInputs = {ESCKEY: SCA_InputEvent()}
+
+        scheduler.process()
+        scheduler.process()
+
+        if repeat:
+            assert pressed == [False, True, True, True, False, False]
+        else:
+            assert pressed == [False, True, False]

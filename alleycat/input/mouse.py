@@ -1,14 +1,12 @@
 from __future__ import annotations
 
 import logging
-from enum import IntFlag
-from functools import reduce
-from typing import Any, Mapping, Tuple
+from enum import Enum, IntFlag
+from typing import Any, Mapping, Set, Tuple
 
 import bge
 import rx
 from alleycat.reactive import RP, RV, functions as rv
-from bge.types import SCA_InputEvent
 from rx import Observable, operators as ops
 from rx.subject import Subject
 from validator_collection import not_empty
@@ -20,10 +18,10 @@ from alleycat.input import Axis2D, AxisInput, TriggerInput
 from alleycat.log import LoggingSupport
 
 
-class MouseButton(IntFlag):
-    LEFT = 1
-    MIDDLE = 2
-    RIGHT = 4
+class MouseButton(Enum):
+    LEFT = 0
+    MIDDLE = 1
+    RIGHT = 2
 
     @property
     def event(self) -> int:
@@ -40,7 +38,7 @@ class MouseButton(IntFlag):
 class MouseInputSource(EventLoopAware, LoggingSupport):
     position: RV[Tuple[float, float]] = rv.new_view()
 
-    buttons: RV[int] = rv.new_view()
+    buttons: RV[Set[MouseButton]] = rv.new_view()
 
     show_pointer: RP[bool] = rv.from_value(False)
 
@@ -53,18 +51,13 @@ class MouseInputSource(EventLoopAware, LoggingSupport):
         # noinspection PyTypeChecker
         self.position = self._position.pipe(
             ops.start_with(bge.logic.mouse.position),
-            ops.distinct_until_changed(),
             ops.share())
-
-        def pressed(e: SCA_InputEvent) -> bool:
-            return bge.logic.KX_INPUT_ACTIVE in e.status or bge.logic.KX_INPUT_JUST_ACTIVATED in e.status
 
         # noinspection PyTypeChecker
         self.buttons = self._activeInputs.pipe(
             ops.start_with({}),
-            ops.map(lambda i: map(lambda b: b if b.event in i and pressed(i[b.event]) else 0, MouseButton)),
-            ops.map(lambda v: reduce(lambda a, b: a | b, v)),
-            ops.distinct_until_changed(),
+            ops.map(lambda i: set(filter(
+                lambda b: b.event in i and bge.logic.KX_INPUT_ACTIVE in i[b.event].status, MouseButton))),
             ops.share())
 
         self.observe("show_pointer").subscribe(lambda v: bge.render.showMouse(v), on_error=self.error_handler)
@@ -80,14 +73,19 @@ class MouseInputSource(EventLoopAware, LoggingSupport):
         return rx.merge(on_wheel(bge.events.WHEELUPMOUSE), on_wheel(bge.events.WHEELDOWNMOUSE))
 
     def on_button_press(self, button: MouseButton) -> Observable:
-        return self.observe("buttons").pipe(ops.filter(lambda b: b & button == button))
+        return self.observe("buttons").pipe(
+            ops.map(lambda b: button in b),
+            ops.distinct_until_changed(),
+            ops.pairwise(),
+            ops.filter(lambda b: not b[0] and b[1]),
+            ops.map(lambda _: button))
 
     def on_button_release(self, button: MouseButton) -> Observable:
         return self.observe("buttons").pipe(
-            ops.map(lambda b: b & button),
+            ops.map(lambda b: button in b),
             ops.distinct_until_changed(),
             ops.pairwise(),
-            ops.filter(lambda b: b[0] == button and b[1] != button),
+            ops.filter(lambda b: b[0] and not b[1]),
             ops.map(lambda _: button))
 
     def process(self) -> None:
@@ -106,11 +104,16 @@ class MouseInputSource(EventLoopAware, LoggingSupport):
 
 class MouseButtonInput(TriggerInput):
 
-    def __init__(self, button: MouseButton, source: MouseInputSource, enabled: bool = True) -> None:
+    def __init__(
+            self,
+            button: MouseButton,
+            source: MouseInputSource,
+            repeat: bool = False,
+            enabled: bool = True) -> None:
         self._button = not_empty(button)
         self._source = not_empty(source)
 
-        super().__init__(enabled=enabled)
+        super().__init__(repeat=repeat, enabled=enabled)
 
     @property
     def button(self) -> MouseButton:
@@ -121,10 +124,13 @@ class MouseButtonInput(TriggerInput):
         return self._source
 
     def create(self) -> Observable:
-        pressed = self.source.on_button_press(self.button).pipe(ops.map(lambda _: True))
-        released = self.source.on_button_release(self.button).pipe(ops.map(lambda _: False))
+        if self.repeat:
+            return self.source.observe("buttons").pipe(ops.map(lambda b: self.button in b))
+        else:
+            pressed = self.source.on_button_press(self.button).pipe(ops.map(lambda _: True))
+            released = self.source.on_button_release(self.button).pipe(ops.map(lambda _: False))
 
-        return rx.merge(pressed, released)
+            return rx.merge(pressed, released)
 
     @classmethod
     def config_schema(cls) -> object:
@@ -140,7 +146,8 @@ class MouseButtonInput(TriggerInput):
                         {"const": "RIGHT"}
                     ]
                 },
-                "enabled": {"type": "boolean"}
+                "enabled": {"type": "boolean"},
+                "repeat": {"type": "boolean"}
             },
             "required": ["type", "button"]
         }
@@ -157,9 +164,10 @@ class MouseButtonInput(TriggerInput):
         json(config, cls.config_schema())
 
         enabled = "enabled" not in config or config["enabled"]
+        repeat = "repeat" in config and config["repeat"]
         button = getattr(MouseButton, config["button"])
 
-        return MouseButtonInput(button, source, enabled)
+        return MouseButtonInput(button, source, repeat, enabled)
 
 
 class MouseAxisInput(AxisInput):
