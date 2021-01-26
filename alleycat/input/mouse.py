@@ -7,7 +7,7 @@ from typing import Any, Mapping, Tuple
 
 import bge
 import rx
-from alleycat.reactive import RV, functions as rv
+from alleycat.reactive import RP, RV, functions as rv
 from bge.types import SCA_InputEvent
 from rx import Observable, operators as ops
 from rx.subject import Subject
@@ -42,6 +42,8 @@ class MouseInputSource(EventLoopAware, LoggingSupport):
 
     buttons: RV[int] = rv.new_view()
 
+    show_pointer: RP[bool] = rv.from_value(False)
+
     def __init__(self, scheduler: EventLoopScheduler) -> None:
         super().__init__(scheduler)
 
@@ -64,6 +66,8 @@ class MouseInputSource(EventLoopAware, LoggingSupport):
             ops.map(lambda v: reduce(lambda a, b: a | b, v)),
             ops.distinct_until_changed(),
             ops.share())
+
+        self.observe("show_pointer").subscribe(lambda v: bge.render.showMouse(v), on_error=self.error_handler)
 
     @property
     def on_wheel_move(self) -> Observable:

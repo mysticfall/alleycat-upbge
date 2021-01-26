@@ -1,6 +1,7 @@
 from typing import Final
 from unittest.mock import PropertyMock
 
+import bge
 from pytest import fixture, mark
 from pytest_mock import MockerFixture
 
@@ -193,3 +194,25 @@ def test_on_wheel_move(mocker: MockerFixture, source: MouseInputSource, schedule
         scheduler.process()
 
         assert scroll == [1, -1]
+
+
+def test_show_mouse(mocker: MockerFixture, source: MouseInputSource):
+    method = mocker.spy(bge.render, "showMouse")
+
+    status = []
+
+    with source.observe("show_pointer").subscribe(status.append):
+        assert status == [False]
+        assert not source.show_pointer
+
+        source.show_pointer = True
+
+        assert status == [False, True]
+
+        method.assert_called_once_with(True)
+
+        source.show_pointer = False
+
+        assert status == [False, True, False]
+
+        method.assert_called_with(False)
