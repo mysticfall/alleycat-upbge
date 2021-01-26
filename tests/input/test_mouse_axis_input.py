@@ -112,8 +112,7 @@ def test_input(
         scheduler: EventLoopScheduler):
     mouse = mocker.patch("bge.logic.mouse")
 
-    positions = ((0.3, 0.1), (0.1, 0.4), (0.2, 0.9))
-    last_pos = 0.5
+    positions = ((0.3, 0.6), (0.5, 0.4), (1.0, 0.1))
     values = []
 
     # noinspection PyShadowingBuiltins
@@ -130,13 +129,10 @@ def test_input(
             if not enabled:
                 continue
 
-            current = position[axis.value]
-            value = (current - last_pos) * sensitivity
+            value = min(max(-1, (position[axis.value] - 0.5) * 2.0 * sensitivity), 1)
 
             if abs(value) < dead_zone:
                 value = 0
-
-            last_pos = current
 
             assert input.value == approx(value)
             assert values[-1] == approx(value)
@@ -144,3 +140,29 @@ def test_input(
         if not enabled:
             assert input.value == 0
             assert values == [0]
+
+
+def test_input_with_pointer_shown(mocker: MockerFixture, source: MouseInputSource, scheduler: EventLoopScheduler):
+    mouse = mocker.patch("bge.logic.mouse")
+
+    values = []
+
+    # noinspection PyShadowingBuiltins
+    with MouseAxisInput(Axis2D.X, source) as input:
+        input.observe("value").subscribe(values.append)
+
+        assert values == [0.0]
+
+        source.show_pointer = True
+
+        mouse.position = (0.2, 0.3)
+        scheduler.process()
+
+        assert values == [0.0]
+
+        source.show_pointer = False
+
+        mouse.position = (0.1, 0.5)
+        scheduler.process()
+
+        assert values == [0.0, -0.8]

@@ -94,6 +94,9 @@ class MouseInputSource(EventLoopAware, LoggingSupport):
         self._position.on_next(bge.logic.mouse.position)
         self._activeInputs.on_next(bge.logic.mouse.activeInputs)
 
+        if not self.show_pointer:
+            bge.logic.mouse.position = (0.5, 0.5)
+
     def dispose(self) -> None:
         super().dispose()
 
@@ -183,9 +186,8 @@ class MouseAxisInput(AxisInput):
 
     def create(self) -> Observable:
         return self.source.observe("position").pipe(
-            ops.map(lambda v: v[self.axis.value]),
-            ops.pairwise(),
-            ops.map(lambda v: v[1] - v[0]))
+            ops.filter(lambda _: not self.source.show_pointer),
+            ops.map(lambda v: (v[self.axis.value] - 0.5) * 2.0))
 
     @classmethod
     def config_schema(cls) -> object:
