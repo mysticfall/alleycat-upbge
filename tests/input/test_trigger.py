@@ -1,13 +1,14 @@
+from dependency_injector import providers
 from dependency_injector.providers import Factory, FactoryAggregate
 from pytest import fixture, raises
 from returns.maybe import Nothing, Some
 from validator_collection.errors import JSONValidationError
 
-from alleycat.input import KeyPressInput, MouseButtonInput, TriggerBinding
+from alleycat.input import Input, KeyPressInput, MouseButtonInput, TriggerBinding
 
 
 @fixture
-def input_factory():
+def input_factory() -> providers.Provider[Input]:
     return FactoryAggregate(
         key_press=Factory(KeyPressInput.from_config),
         mouse_button=Factory(MouseButtonInput.from_config),

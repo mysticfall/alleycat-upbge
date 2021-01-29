@@ -33,7 +33,7 @@ class TestAxisInput(AxisInput):
 
 
 @fixture
-def input_factory():
+def input_factory() -> providers.Provider[Input]:
     return FactoryAggregate(test=Factory(TestAxisInput.from_config), )
 
 

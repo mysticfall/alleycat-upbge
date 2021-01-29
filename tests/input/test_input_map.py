@@ -15,12 +15,12 @@ class TestBinding(InputBinding[float]):
 
 
 @fixture
-def input_factory():
+def input_factory() -> providers.Provider[Input]:
     return FactoryAggregate()
 
 
 @fixture
-def binding_factory():
+def binding_factory() -> providers.Provider[InputBinding]:
     return FactoryAggregate(test=Factory(TestBinding.from_config), )
 
 
