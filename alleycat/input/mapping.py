@@ -5,7 +5,7 @@ from abc import ABC
 from typing import Any, Generic, Mapping, Optional, TypeVar
 
 from alleycat.reactive import ReactiveObject
-from dependency_injector.providers import Provider
+from dependency_injector import providers
 from returns.maybe import Maybe
 from validator_collection.validators import not_empty
 
@@ -42,8 +42,8 @@ class InputMap(Lookup[Lookup[InputBinding]]):
 
     @classmethod
     def from_config(cls,
-                    binding_factory: Provider[InputBinding],
-                    input_factory: Provider[Input],
+                    binding_factory: providers.Provider[InputBinding],
+                    input_factory: providers.Provider[Input],
                     config: Mapping[str, Any]) -> InputMap:
         not_empty(binding_factory)
         not_empty(input_factory)
@@ -52,6 +52,8 @@ class InputMap(Lookup[Lookup[InputBinding]]):
         logger = logging.getLogger(cls.__name__)
 
         def create_lookup(configs) -> Lookup[InputBinding]:
+            bindings = dict()
+
             for k in configs:
                 binding_config = configs[k]
 
@@ -60,16 +62,17 @@ class InputMap(Lookup[Lookup[InputBinding]]):
                     continue
 
                 binding_type = binding_config["type"]
+                binding = binding_factory(binding_type, input_factory, binding_config)
 
-                logger.info(binding_factory(binding_type, input_factory, binding_config))
+                bindings[k] = binding
 
-                pass
+            return Lookup[InputBinding](bindings)
+
+        lookups = dict()
 
         for key in config:
-            binding = create_lookup(config[key])
+            lookup = create_lookup(config[key])
 
-            # input = input_factory(key)
+            lookups[key] = lookup
 
-            logger.info(f"### created binding: {binding}")
-
-        return InputMap(dict())
+        return InputMap(lookups)
