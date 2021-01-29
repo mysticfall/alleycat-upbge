@@ -13,17 +13,19 @@
     },
     "view": {
       "rotate": {
-        "type": "axis",
+        "type": "axis2d",
         "name": "Look Around",
         "description": "Rotate the current view.",
         "input": {
           "x": {
             "type": "mouse_axis",
-            "axis": "x"
+            "axis": "x",
+            "sensitivity": 0.4
           },
           "y": {
             "type": "mouse_axis",
-            "axis": "y"
+            "axis": "y",
+            "sensitivity": 0.4
           }
         }
       }
