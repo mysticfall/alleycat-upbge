@@ -1,14 +1,13 @@
 import json
 import logging
 import sys
-from validator_collection import validators
 from collections import OrderedDict
 from logging.config import fileConfig
 from pathlib import Path
 
 from bge.types import KX_GameObject, KX_PythonComponent
 from bpy.path import abspath
-from dependency_injector.providers import Object
+from validator_collection import validators
 
 from alleycat.event import EventLoopScheduler
 from alleycat.game import GameContext
@@ -35,9 +34,7 @@ class Bootstrap(LoggingSupport, KX_PythonComponent):
 
         print(f"Starting {key}.")
 
-        self.scheduler = EventLoopScheduler()
-
-        self.context = GameContext(scheduler=Object(self.scheduler))
+        self.context = GameContext()
 
         config_file = Path(abspath(config_path))
 
@@ -65,6 +62,7 @@ class Bootstrap(LoggingSupport, KX_PythonComponent):
         sys.excepthook = except_hook
 
         self.context.wire(modules=[sys.modules["alleycat.actor"]])
+        self.scheduler = self.context.scheduler()
 
         self.logger.info("Bootstrap has completed successfully.")
 
@@ -75,4 +73,4 @@ class Bootstrap(LoggingSupport, KX_PythonComponent):
         self.logger.info("Disposing context.")
 
         if self.context:
-            self.context.scheduler().dispose()
+            self.context.shutdown_resources()
