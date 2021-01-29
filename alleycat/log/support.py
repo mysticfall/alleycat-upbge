@@ -12,11 +12,11 @@ class LoggingSupport(ErrorHandlerSupport, ABC):
 
     @property
     def logger_name(self) -> str:
-        return __name__
+        return type(self).__name__
 
     @cached_property
     def logger(self) -> Logger:
-        return getLogger(type(self).__name__)
+        return getLogger(self.logger_name)
 
     @property
     def error_handler(self) -> ErrorHandler:
