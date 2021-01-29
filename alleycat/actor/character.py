@@ -42,7 +42,7 @@ class Character(LoggingSupport, ReactiveObject, KX_PythonComponent):
             camera_obj.applyRotation((0, 0, -value.x), False)
             camera_obj.applyRotation((-value.y, 0, 0), True)
 
-        view_input = input_map["view"]
+        view_input = input_map["view"]["rotate"]
         view_input.observe("value") \
             .pipe(ops.filter(lambda v: v.length_squared > 0)) \
             .subscribe(rotate, on_error=self.error_handler)
