@@ -35,11 +35,14 @@
     "version": 1,
     "loggers": {
       "root": {
-        "level": "DEBUG",
+        "level": "WARNING",
         "handlers": [
           "stdout",
           "console"
         ]
+      },
+      "alleycat": {
+        "level": "INFO"
       }
     },
     "formatters": {
