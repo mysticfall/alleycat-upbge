@@ -12,6 +12,8 @@ from rx.scheduler import ScheduledItem
 from rx.scheduler.periodicscheduler import PeriodicScheduler
 from rx.subject import Subject
 
+from alleycat.log import LoggingSupport
+
 DELTA_ZERO = timedelta(0)
 
 
@@ -21,10 +23,12 @@ class TimeMode(Enum):
     Real = 2
 
 
-class EventLoopScheduler(Disposable, PeriodicScheduler):
+class EventLoopScheduler(Disposable, LoggingSupport, PeriodicScheduler):
 
     def __init__(self, init_time: Optional[datetime] = None, mode: TimeMode = TimeMode.Frame) -> None:
         super().__init__()
+
+        self.logger.info("Creating a scheduler with timer: %s.", mode.name)
 
         self._queue: PriorityQueue[ScheduledItem] = PriorityQueue()
         self._init_time = mktime((init_time if init_time else datetime.now()).timetuple())
@@ -88,6 +92,8 @@ class EventLoopScheduler(Disposable, PeriodicScheduler):
         return self._on_process
 
     def dispose(self) -> None:
+        self.logger.info("Disposing scheduler instance.")
+
         self._on_process.dispose()
 
         super().dispose()

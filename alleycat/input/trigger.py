@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 from abc import ABC
 from typing import Any, Mapping, Optional
 
@@ -8,6 +7,7 @@ from dependency_injector import providers
 from validator_collection import not_empty
 from validator_collection.validators import json
 
+from alleycat import log
 from alleycat.common import ConfigMetaSchema
 from alleycat.input import Input, InputBinding
 
@@ -40,7 +40,7 @@ class TriggerBinding(InputBinding):
     def from_config(cls, input_factory: providers.Provider[Input], config: Mapping[str, Any]) -> TriggerBinding:
         not_empty(input_factory)
 
-        logger = logging.getLogger(cls.__name__)
+        logger = log.get_logger(cls)
 
         logger.debug("Creating a trigger binding from config: %s", config)
 

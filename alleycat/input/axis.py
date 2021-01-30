@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 from abc import ABC
 from enum import Enum
 from itertools import chain
@@ -17,6 +16,7 @@ from rx import Observable, operators as ops
 from validator_collection import validators
 from validator_collection.validators import json, not_empty, numeric
 
+from alleycat import log
 from alleycat.common import ConfigMetaSchema
 from alleycat.input import Input, InputBinding
 
@@ -64,9 +64,11 @@ class AxisInput(Input[float], ABC):
 
 
 class Axis2DBinding(InputBinding[AxisInput]):
-    x_input: RP[Maybe[AxisInput]] = rv.new_property()
+    x_input: RP[Maybe[AxisInput]] = rv.new_property().pipe(
+        lambda b: (ops.do_action(lambda i: b.logger.debug("Set X axis input to %s.", i)),))
 
-    y_input: RP[Maybe[AxisInput]] = rv.new_property()
+    y_input: RP[Maybe[AxisInput]] = rv.new_property().pipe(
+        lambda b: (ops.do_action(lambda i: b.logger.debug("Set Y axis input to %s.", i)),))
 
     # noinspection PyTypeChecker
     value: RV[Vector] = rv.combine_latest(x_input, y_input)(ops.pipe(
@@ -77,7 +79,7 @@ class Axis2DBinding(InputBinding[AxisInput]):
         ops.map(lambda v: v.value_or(rx.return_value((0.0, 0.0)))),
         ops.switch_latest(),
         ops.map(lambda v: mathutils.Vector(v)))  # To allow test mockup. I know it's ugly but do we have any better way?
-    )
+    ).pipe(lambda b: (ops.do_action(b.log_value), ))
 
     def __init__(
             self, name: str,
@@ -117,9 +119,9 @@ class Axis2DBinding(InputBinding[AxisInput]):
     def from_config(cls, input_factory: providers.Provider[Input], config: Mapping[str, Any]) -> Axis2DBinding:
         not_empty(input_factory)
 
-        logger = logging.getLogger(cls.__name__)
+        logger = log.get_logger(cls)
 
-        logger.debug("Creating a 2D axis binding from config: %s", config)
+        logger.debug("Creating a 2D axis binding from config: %s.", config)
 
         json(config, cls.config_schema())
 

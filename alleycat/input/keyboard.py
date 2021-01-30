@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 from enum import Enum
 from itertools import chain
 from typing import Any, Mapping, Set
@@ -13,6 +12,7 @@ from rx.subject import Subject
 from validator_collection import is_string
 from validator_collection.validators import json, not_empty
 
+from alleycat import log
 from alleycat.common import ConfigMetaSchema
 from alleycat.event import EventLoopAware, EventLoopScheduler
 from alleycat.input import TriggerInput
@@ -83,6 +83,8 @@ class KeyPressInput(TriggerInput):
 
         super().__init__(repeat=repeat, enabled=enabled)
 
+        self.logger.debug("Binding to key code: %d", keycode)
+
     @property
     def keycode(self) -> int:
         return self._keycode
@@ -124,7 +126,7 @@ class KeyPressInput(TriggerInput):
         not_empty(source)
         not_empty(config)
 
-        logger = logging.getLogger(cls.__name__)
+        logger = log.get_logger(cls)
 
         logger.debug("Creating a key press input from config: \n %s", config)
 

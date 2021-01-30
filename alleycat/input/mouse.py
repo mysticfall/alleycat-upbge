@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from enum import Enum, IntFlag
+from enum import Enum
 from typing import Any, Mapping, Set, Tuple
 
 import bge
@@ -12,6 +12,7 @@ from rx.subject import Subject
 from validator_collection import not_empty
 from validator_collection.validators import json
 
+from alleycat import log
 from alleycat.common import ConfigMetaSchema
 from alleycat.event import EventLoopAware, EventLoopScheduler
 from alleycat.input import Axis2D, AxisInput, TriggerInput
@@ -184,6 +185,8 @@ class MouseAxisInput(AxisInput):
 
         super().__init__(sensitivity=sensitivity, dead_zone=dead_zone, enabled=enabled)
 
+        self.logger.debug("Binding to %s axis (sensitivity=%f, dead_zone=%f).", axis.name, sensitivity, dead_zone)
+
     @property
     def axis(self) -> Axis2D:
         return self._axis
@@ -222,9 +225,9 @@ class MouseAxisInput(AxisInput):
         not_empty(source)
         not_empty(config)
 
-        logger = logging.getLogger(cls.__name__)
+        logger = log.get_logger(cls)
 
-        logger.debug("Creating a key press input from config: %s", config)
+        logger.debug("Creating a mouse axis input from config: %s", config)
 
         json(config, cls.config_schema())
 
