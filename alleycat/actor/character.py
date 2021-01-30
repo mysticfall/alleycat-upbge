@@ -42,10 +42,18 @@ class Character(LoggingSupport, ReactiveObject, KX_PythonComponent):
             camera_obj.applyRotation((0, 0, -value.x), False)
             camera_obj.applyRotation((-value.y, 0, 0), True)
 
-        view_input = input_map["view"]["rotate"]
-        view_input.observe("value") \
+        def move(value: Vector):
+            camera_obj.applyMovement(value.to_tuple(), True)
+
+        rotate_input = input_map["view"]["rotate"]
+        rotate_input.observe("value") \
             .pipe(ops.filter(lambda v: v.length_squared > 0)) \
             .subscribe(rotate, on_error=self.error_handler)
+
+        move_input = input_map["view"]["move"]
+        move_input.observe("value") \
+            .pipe(ops.filter(lambda v: v.length_squared > 0), ops.map(lambda v: v.resized(3).xzy * -1)) \
+            .subscribe(move, on_error=self.error_handler)
 
     def update(self) -> None:
         pass

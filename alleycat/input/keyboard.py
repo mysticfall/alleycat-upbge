@@ -15,7 +15,7 @@ from validator_collection.validators import json, not_empty
 from alleycat import log
 from alleycat.common import ConfigMetaSchema
 from alleycat.event import EventLoopAware, EventLoopScheduler
-from alleycat.input import TriggerInput
+from alleycat.input import AxisInput, TriggerInput
 from alleycat.log import LoggingSupport
 
 
@@ -83,7 +83,7 @@ class KeyPressInput(TriggerInput):
 
         super().__init__(repeat=repeat, enabled=enabled)
 
-        self.logger.debug("Binding to key code: %d", keycode)
+        self.logger.debug("Binding to key code: %s", keycode)
 
     @property
     def keycode(self) -> int:
@@ -141,3 +141,97 @@ class KeyPressInput(TriggerInput):
         repeat = "repeat" in config and config["repeat"]
 
         return KeyPressInput(key, source, repeat, enabled)
+
+
+class KeyAxisInput(AxisInput):
+    def __init__(
+            self,
+            positive_key: int,
+            negative_key: int,
+            source: KeyInputSource,
+            sensitivity: float = 1.0,
+            dead_zone: float = 0.0,
+            enabled: bool = True) -> None:
+        bge.events.EventToString(positive_key)
+        bge.events.EventToString(negative_key)
+
+        self._positive_key = positive_key
+        self._negative_key = negative_key
+
+        self._source = not_empty(source)
+
+        super().__init__(sensitivity=sensitivity, dead_zone=dead_zone, enabled=enabled)
+
+        self.logger.debug("Creating axis with keys %s(+) and %s(-) (sensitivity=%f, dead_zone=%f).",
+                          positive_key, negative_key, sensitivity, dead_zone)
+
+    @property
+    def positive_key(self) -> int:
+        return self._positive_key
+
+    @property
+    def negative_key(self) -> int:
+        return self._negative_key
+
+    @property
+    def source(self) -> KeyInputSource:
+        return self._source
+
+    def create(self) -> Observable:
+        def get_value(key: int, pressed: Set[int]) -> float:
+            return 1 if key in pressed else 0
+
+        return self.source.observe("pressed").pipe(
+            ops.map(lambda p: get_value(self.positive_key, p) - get_value(self.negative_key, p)))
+
+    @classmethod
+    def config_schema(cls) -> object:
+        return {
+            "$schema": ConfigMetaSchema,
+            "type": "object",
+            "properties": {
+                "type": {"const": "key_axis"},
+                "positive_key": {
+                    "anyOf": [
+                        {"type": "string"},
+                        {"type": "number"}
+                    ]
+                },
+                "negative_key": {
+                    "anyOf": [
+                        {"type": "string"},
+                        {"type": "number"}
+                    ]
+                },
+                "sensitivity": {"type": "number", "minimum": 0},
+                "dead_zone": {"type": "number", "minimum": 0, "maximum": 1},
+                "enabled": {"type": "boolean"}
+            },
+            "required": ["type", "positive_key", "negative_key"]
+        }
+
+    @classmethod
+    def from_config(cls, source: KeyInputSource, config: Mapping[str, Any]) -> KeyAxisInput:
+        not_empty(source)
+        not_empty(config)
+
+        logger = log.get_logger(cls)
+
+        logger.debug("Creating a keyboard axis input from config: %s", config)
+
+        json(config, cls.config_schema())
+
+        enabled = "enabled" not in config or config["enabled"]
+        sensitivity = config.get("sensitivity", 1.0)
+        dead_zone = config.get("dead_zone", 0.0)
+
+        positive_key = config["positive_key"]
+        negative_key = config["negative_key"]
+
+        if is_string(positive_key):
+            positive_key = getattr(bge.events, positive_key)
+
+        if is_string(negative_key):
+            negative_key = getattr(bge.events, negative_key)
+
+        return KeyAxisInput(positive_key, negative_key, source, sensitivity, dead_zone, enabled)

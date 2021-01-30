@@ -3,7 +3,7 @@ from dependency_injector.containers import DeclarativeContainer
 from dependency_injector.providers import Configuration, Dependency, Factory, FactoryAggregate, Singleton
 
 from alleycat.event import EventLoopScheduler
-from alleycat.input import Axis2DBinding, Input, InputBinding, InputMap, KeyInputSource, KeyPressInput, \
+from alleycat.input import Axis2DBinding, Input, InputBinding, InputMap, KeyAxisInput, KeyInputSource, KeyPressInput, \
     MouseAxisInput, MouseButtonInput, MouseInputSource, TriggerBinding
 
 
@@ -22,6 +22,7 @@ class InputContext(DeclarativeContainer):
 
     input_factory: providers.Provider[Input] = FactoryAggregate(
         key_press=Factory(KeyPressInput.from_config, keyboard),
+        key_axis=Factory(KeyAxisInput.from_config, keyboard),
         mouse_button=Factory(MouseButtonInput.from_config, mouse),
         mouse_axis=Factory(MouseAxisInput.from_config, mouse))
 
