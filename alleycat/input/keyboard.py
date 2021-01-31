@@ -45,7 +45,7 @@ class KeyInputSource(EventLoopAware, LoggingSupport):
 
             return dict(chain(hold, pressed, released))
 
-        self._states = self.observe("pressed").pipe(
+        self._states = rv.observe(self.pressed).pipe(
             ops.start_with(set()),
             ops.pairwise(),
             ops.map(lambda s: to_state(s[0], s[1])),
@@ -95,7 +95,7 @@ class KeyPressInput(TriggerInput):
 
     def create(self) -> Observable:
         if self.repeat:
-            return self.source.observe("pressed").pipe(ops.map(lambda p: self.keycode in p))
+            return rv.observe(self.source.pressed).pipe(ops.map(lambda p: self.keycode in p))
         else:
             pressed = self.source.on_key_press(self.keycode).pipe(ops.map(lambda _: True))
             released = self.source.on_key_release(self.keycode).pipe(ops.map(lambda _: False))
@@ -181,7 +181,7 @@ class KeyAxisInput(AxisInput):
         def get_value(key: int, pressed: Set[int]) -> float:
             return 1 if key in pressed else 0
 
-        return self.source.observe("pressed").pipe(
+        return rv.observe(self.source.pressed).pipe(
             ops.map(lambda p: get_value(self.positive_key, p) - get_value(self.negative_key, p)))
 
     @classmethod

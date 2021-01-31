@@ -61,7 +61,7 @@ class MouseInputSource(EventLoopAware, LoggingSupport):
                 lambda b: b.event in i and bge.logic.KX_INPUT_ACTIVE in i[b.event].status, MouseButton))),
             ops.share())
 
-        self.observe("show_pointer").subscribe(lambda v: bge.render.showMouse(v), on_error=self.error_handler)
+        rv.observe(self.show_pointer).subscribe(lambda v: bge.render.showMouse(v), on_error=self.error_handler)
 
     @property
     def on_wheel_move(self) -> Observable:
@@ -74,7 +74,7 @@ class MouseInputSource(EventLoopAware, LoggingSupport):
         return rx.merge(on_wheel(bge.events.WHEELUPMOUSE), on_wheel(bge.events.WHEELDOWNMOUSE))
 
     def on_button_press(self, button: MouseButton) -> Observable:
-        return self.observe("buttons").pipe(
+        return rv.observe(self.buttons).pipe(
             ops.map(lambda b: button in b),
             ops.distinct_until_changed(),
             ops.pairwise(),
@@ -82,7 +82,7 @@ class MouseInputSource(EventLoopAware, LoggingSupport):
             ops.map(lambda _: button))
 
     def on_button_release(self, button: MouseButton) -> Observable:
-        return self.observe("buttons").pipe(
+        return rv.observe(self.buttons).pipe(
             ops.map(lambda b: button in b),
             ops.distinct_until_changed(),
             ops.pairwise(),
@@ -126,7 +126,7 @@ class MouseButtonInput(TriggerInput):
 
     def create(self) -> Observable:
         if self.repeat:
-            return self.source.observe("buttons").pipe(ops.map(lambda b: self.button in b))
+            return rv.observe(self.source.buttons).pipe(ops.map(lambda b: self.button in b))
         else:
             pressed = self.source.on_button_press(self.button).pipe(ops.map(lambda _: True))
             released = self.source.on_button_release(self.button).pipe(ops.map(lambda _: False))
@@ -196,7 +196,7 @@ class MouseAxisInput(AxisInput):
         return self._source
 
     def create(self) -> Observable:
-        return self.source.observe("position").pipe(
+        return rv.observe(self.source.position).pipe(
             ops.filter(lambda _: not self.source.show_pointer),
             ops.map(lambda v: (v[self.axis.value] - 0.5) * 2.0))
 

@@ -1,7 +1,7 @@
 from collections import OrderedDict
 
 import bge
-from alleycat.reactive import ReactiveObject
+from alleycat.reactive import ReactiveObject, functions as rv
 from bge.types import KX_GameObject, KX_PythonComponent, KX_Scene
 from bpy.types import Object
 from dependency_injector.wiring import Provide, inject
@@ -46,12 +46,12 @@ class Character(LoggingSupport, ReactiveObject, KX_PythonComponent):
             camera_obj.applyMovement(value.to_tuple(), True)
 
         rotate_input = input_map["view"]["rotate"]
-        rotate_input.observe("value") \
+        rv.observe(rotate_input.value) \
             .pipe(ops.filter(lambda v: v.length_squared > 0)) \
             .subscribe(rotate, on_error=self.error_handler)
 
         move_input = input_map["view"]["move"]
-        move_input.observe("value") \
+        rv.observe(move_input.value) \
             .pipe(ops.filter(lambda v: v.length_squared > 0), ops.map(lambda v: v.resized(3).xzy * -1)) \
             .subscribe(move, on_error=self.error_handler)
 
