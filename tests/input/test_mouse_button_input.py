@@ -1,6 +1,7 @@
 from typing import Final
 from unittest.mock import PropertyMock
 
+from alleycat.reactive import functions as rv
 from pytest import fixture, mark, raises
 from pytest_mock import MockerFixture
 from validator_collection.errors import JSONValidationError
@@ -124,7 +125,7 @@ def test_input(mocker: MockerFixture, source: MouseInputSource, scheduler: Event
 
     # noinspection PyShadowingBuiltins
     with MouseButtonInput(MouseButton.LEFT, source) as input:
-        input.observe("value").subscribe(pressed.append)
+        rv.observe(input.value).subscribe(pressed.append)
 
         assert pressed == [False]
         assert not input.value
@@ -162,7 +163,7 @@ def test_disabled_input(mocker: MockerFixture, source: MouseInputSource, schedul
 
     # noinspection PyShadowingBuiltins
     with MouseButtonInput(MouseButton.RIGHT, source) as input:
-        input.observe("value").subscribe(pressed.append)
+        rv.observe(input.value).subscribe(pressed.append)
 
         input.enabled = False
         mouse.activeInputs = {RIGHTMOUSE: create_event(InputState.JustActivated)}
@@ -195,7 +196,7 @@ def test_repeat(repeat: bool, mocker: MockerFixture, source: MouseInputSource, s
 
     # noinspection PyShadowingBuiltins
     with MouseButtonInput(MouseButton.RIGHT, source, repeat=repeat) as input:
-        input.observe("value").subscribe(pressed.append)
+        rv.observe(input.value).subscribe(pressed.append)
 
         mouse.activeInputs = {RIGHTMOUSE: create_event(InputState.JustActivated)}
 

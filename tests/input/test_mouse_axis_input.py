@@ -1,3 +1,4 @@
+from alleycat.reactive import functions as rv
 from pytest import approx, fixture, mark, raises
 from pytest_mock import MockerFixture
 from validator_collection.errors import JSONValidationError
@@ -117,7 +118,7 @@ def test_input(
 
     # noinspection PyShadowingBuiltins
     with MouseAxisInput(axis, source, sensitivity, dead_zone, enabled) as input:
-        input.observe("value").subscribe(values.append)
+        rv.observe(input.value).subscribe(values.append)
 
         assert input.value == 0
         assert values == [0]
@@ -149,7 +150,7 @@ def test_input_with_pointer_shown(mocker: MockerFixture, source: MouseInputSourc
 
     # noinspection PyShadowingBuiltins
     with MouseAxisInput(Axis2D.X, source) as input:
-        input.observe("value").subscribe(values.append)
+        rv.observe(input.value).subscribe(values.append)
 
         assert values == [0.0]
 
@@ -175,7 +176,7 @@ def test_input_repeat(mocker: MockerFixture, source: MouseInputSource, scheduler
 
     # noinspection PyShadowingBuiltins
     with MouseAxisInput(Axis2D.Y, source) as input:
-        input.observe("value").subscribe(values.append)
+        rv.observe(input.value).subscribe(values.append)
 
         mouse.position = (0.2, 0.3)
         scheduler.process()

@@ -1,6 +1,7 @@
 from typing import Final, Tuple
 from unittest.mock import PropertyMock
 
+from alleycat.reactive import functions as rv
 from bge.types import SCA_InputEvent
 from pytest import approx, fixture, mark, raises
 from pytest_mock import MockerFixture
@@ -186,7 +187,7 @@ def test_input(
 
     # noinspection PyShadowingBuiltins
     with KeyAxisInput(keys[0], keys[1], source, 0, 0, sensitivity, dead_zone, enabled) as input:
-        input.observe("value").subscribe(values.append)
+        rv.observe(input.value).subscribe(values.append)
 
         assert input.value == 0
         assert values == [0]

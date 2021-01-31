@@ -24,7 +24,7 @@ class TestAxisInput(AxisInput):
     test_value: RP[float] = rv.from_value(0.0)
 
     def create(self) -> Observable:
-        return self.observe("test_value")
+        return rv.observe(self.test_value)
 
     # noinspection PyUnusedLocal
     @classmethod

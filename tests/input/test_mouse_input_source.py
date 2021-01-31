@@ -2,6 +2,7 @@ from typing import Final
 from unittest.mock import PropertyMock
 
 import bge
+from alleycat.reactive import functions as rv
 from pytest import fixture, mark
 from pytest_mock import MockerFixture
 
@@ -62,7 +63,7 @@ def test_buttons(mocker: MockerFixture, source: MouseInputSource, scheduler: Eve
 
     buttons = []
 
-    with source.observe("buttons").subscribe(buttons.append):
+    with rv.observe(source.buttons).subscribe(buttons.append):
         assert buttons == [set()]
 
         mouse.activeInputs = {MouseButton.LEFT.event: create_event(InputState.Active)}
@@ -166,7 +167,7 @@ def test_position(mocker: MockerFixture, source: MouseInputSource, scheduler: Ev
 
     positions = []
 
-    with source.observe("position").subscribe(positions.append):
+    with rv.observe(source.position).subscribe(positions.append):
         assert positions == [(0.5, 0.5)]
 
         mouse.position = (0.7, 0.2)
@@ -199,7 +200,7 @@ def test_show_mouse(mocker: MockerFixture, source: MouseInputSource):
 
     status = []
 
-    with source.observe("show_pointer").subscribe(status.append):
+    with rv.observe(source.show_pointer).subscribe(status.append):
         assert status == [False]
         assert not source.show_pointer
 

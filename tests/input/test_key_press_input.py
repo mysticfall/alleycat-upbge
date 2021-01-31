@@ -1,6 +1,7 @@
 from typing import Final
 from unittest.mock import PropertyMock
 
+from alleycat.reactive import functions as rv
 from bge.types import SCA_InputEvent
 from pytest import fixture, mark, raises
 from pytest_mock import MockerFixture
@@ -152,7 +153,7 @@ def test_input(mocker: MockerFixture, source: KeyInputSource, scheduler: EventLo
 
     # noinspection PyShadowingBuiltins
     with KeyPressInput(ESCKEY, source) as input:
-        input.observe("value").subscribe(pressed.append)
+        rv.observe(input.value).subscribe(pressed.append)
 
         assert pressed == [False]
         assert not input.value
@@ -189,7 +190,7 @@ def test_disabled_input(mocker: MockerFixture, source: KeyInputSource, scheduler
 
     # noinspection PyShadowingBuiltins
     with KeyPressInput(ESCKEY, source) as input:
-        input.observe("value").subscribe(pressed.append)
+        rv.observe(input.value).subscribe(pressed.append)
 
         input.enabled = False
         keyboard.activeInputs = {ESCKEY: SCA_InputEvent()}
@@ -222,7 +223,7 @@ def test_repeat(repeat: bool, mocker: MockerFixture, source: KeyInputSource, sch
 
     # noinspection PyShadowingBuiltins
     with KeyPressInput(ENTERKEY, source, repeat=repeat) as input:
-        input.observe("value").subscribe(pressed.append)
+        rv.observe(input.value).subscribe(pressed.append)
 
         keyboard.activeInputs = {ENTERKEY: SCA_InputEvent()}
 

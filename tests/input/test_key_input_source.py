@@ -1,5 +1,6 @@
 from typing import Final
 
+from alleycat.reactive import functions as rv
 from bge.types import SCA_InputEvent
 from pytest import fixture
 from pytest_mock import MockerFixture
@@ -75,7 +76,7 @@ def test_pressed(mocker: MockerFixture, source: KeyInputSource, scheduler: Event
 
     pressed = []
 
-    with source.observe("pressed").subscribe(pressed.append):
+    with rv.observe(source.pressed).subscribe(pressed.append):
         assert pressed == [set()]
 
         keyboard.activeInputs = {ENTERKEY: SCA_InputEvent()}
