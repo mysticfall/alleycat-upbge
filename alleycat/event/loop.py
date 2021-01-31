@@ -11,13 +11,17 @@ from alleycat.event import EventLoopScheduler
 class EventLoopAware(ErrorHandlerSupport, ReactiveObject, ABC):
 
     def __init__(self, scheduler: EventLoopScheduler) -> None:
-        not_empty(scheduler)
+        self._scheduler = not_empty(scheduler)
 
         super().__init__()
 
         scheduler.on_process \
             .pipe(ops.take_until(self.on_dispose)) \
             .subscribe(lambda _: self.process(), on_error=self.error_handler)
+
+    @property
+    def scheduler(self) -> EventLoopScheduler:
+        return self._scheduler
 
     @abstractmethod
     def process(self) -> None:
