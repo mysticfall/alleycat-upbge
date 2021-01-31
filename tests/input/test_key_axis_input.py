@@ -2,7 +2,7 @@ from typing import Final, Tuple
 from unittest.mock import PropertyMock
 
 from bge.types import SCA_InputEvent
-from pytest import fixture, mark, raises
+from pytest import approx, fixture, mark, raises
 from pytest_mock import MockerFixture
 from validator_collection.errors import JSONValidationError
 
@@ -16,10 +16,15 @@ D: Final = 26
 
 
 @fixture
-def scheduler(mocker: MockerFixture) -> EventLoopScheduler:
+def timer(mocker: MockerFixture):
     timer = mocker.patch("bge.logic.getFrameTime")
     timer.return_value = 0.
 
+    return timer
+
+
+@fixture
+def scheduler(timer) -> EventLoopScheduler:
     return EventLoopScheduler()
 
 
@@ -36,11 +41,15 @@ def source(mocker: MockerFixture, scheduler: EventLoopScheduler) -> KeyInputSour
 
 
 @mark.parametrize("keys", ((W, S), (A, D)))
+@mark.parametrize("window_size", (0.5, 0.2))
+@mark.parametrize("window_shift", (0.03, 0.01))
 @mark.parametrize("sensitivity", (0.4, 0.9))
 @mark.parametrize("dead_zone", (0.1, 0.2))
 @mark.parametrize("enabled", (True, False))
 def test_from_config(
         keys: Tuple[int, int],
+        window_size: float,
+        window_shift: float,
         sensitivity: float,
         dead_zone: float,
         enabled: bool,
@@ -49,6 +58,8 @@ def test_from_config(
         "type": "key_axis",
         "positive_key": keys[0],
         "negative_key": keys[1],
+        "window_size": window_size,
+        "window_shift": window_shift,
         "sensitivity": sensitivity,
         "dead_zone": dead_zone,
         "enabled": enabled
@@ -60,6 +71,8 @@ def test_from_config(
     assert input
     assert input.positive_key == keys[0]
     assert input.negative_key == keys[1]
+    assert input.window_size == window_size
+    assert input.window_shift == window_shift
     assert input.sensitivity == sensitivity
     assert input.dead_zone == dead_zone
     assert input.enabled == enabled
@@ -93,6 +106,8 @@ def test_from_default_config(source: KeyInputSource):
     assert input
     assert input.positive_key == W
     assert input.negative_key == S
+    assert input.window_size == 0.1
+    assert input.window_shift == 0.01
     assert input.sensitivity == 1.0
     assert input.dead_zone == 0.0
     assert input.enabled
@@ -170,7 +185,7 @@ def test_input(
     values = []
 
     # noinspection PyShadowingBuiltins
-    with KeyAxisInput(keys[0], keys[1], source, sensitivity, dead_zone, enabled) as input:
+    with KeyAxisInput(keys[0], keys[1], source, 0, 0, sensitivity, dead_zone, enabled) as input:
         input.observe("value").subscribe(values.append)
 
         assert input.value == 0
@@ -197,3 +212,37 @@ def test_input(
         else:
             assert input.value == 0
             assert values == [0]
+
+
+@mark.parametrize("window_size", (0.1, 0.2))
+@mark.parametrize("window_shift", (0.02, 0.05))
+def test_input_interpolation(
+        timer,
+        window_size: float,
+        window_shift: float,
+        mocker: MockerFixture,
+        source: KeyInputSource,
+        scheduler: EventLoopScheduler):
+    keyboard = mocker.patch("bge.logic.keyboard")
+
+    # noinspection PyShadowingBuiltins
+    with KeyAxisInput(W, S, source, window_size, window_shift) as input:
+        keyboard.activeInputs = dict()
+
+        scheduler.process()
+
+        while timer.return_value < window_size:
+            timer.return_value += window_shift
+            scheduler.process()
+
+        keyboard.activeInputs = {W: SCA_InputEvent()}
+
+        steps = int(window_size / window_shift)
+
+        for i in range(0, steps):
+            timer.return_value += window_shift
+            scheduler.process()
+
+            assert input.value == approx((i + 1) / steps)
+
+        assert input.value == 1.0
