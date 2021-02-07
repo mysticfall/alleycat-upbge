@@ -5,7 +5,7 @@ from nodeitems_utils import NodeItem, register_node_categories, unregister_node_
 
 from alleycat.animation.addon import AnimationNodeCategory, AnimationNodeTree, AnimationOutputNode, MixAnimationNode, \
     NodeSocketAnimation, PlayActionNode
-from alleycat.common import NodeSocketFloat0To1
+from alleycat.nodetree import NodeSocketFloat0To1
 
 bl_info = {
     "name": "AlleyCat Framework",

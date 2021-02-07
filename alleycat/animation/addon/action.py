@@ -3,7 +3,7 @@ from bpy.types import Action, Context, UILayout
 
 from alleycat.animation import AnimationContext, PlayMode
 from alleycat.animation.addon import AnimationNode, NodeSocketAnimation
-from alleycat.common import NodeSocketFloat0To1
+from alleycat.nodetree import NodeSocketFloat0To1
 
 
 class PlayActionNode(AnimationNode):
