@@ -67,7 +67,8 @@ class Bootstrap(LoggingSupport, KX_PythonComponent):
         self.logger.info("Bootstrap has completed successfully.")
 
     def update(self) -> None:
-        self.scheduler.process()
+        if self.scheduler:
+            self.scheduler.process()
 
     def dispose(self) -> None:
         self.logger.info("Disposing context.")
