@@ -1,4 +1,3 @@
-from abc import ABC
 from functools import cached_property, partial
 from logging import Logger, getLogger
 
@@ -6,7 +5,7 @@ from alleycat import log
 from alleycat.common import ErrorHandler, ErrorHandlerSupport
 
 
-class LoggingSupport(ErrorHandlerSupport, ABC):
+class LoggingSupport(ErrorHandlerSupport):
 
     def __init__(self) -> None:
         super().__init__()

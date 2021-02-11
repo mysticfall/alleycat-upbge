@@ -1,6 +1,6 @@
 import sys
 import traceback
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from typing import Callable
 
 from validator_collection import not_empty
@@ -8,7 +8,7 @@ from validator_collection import not_empty
 ErrorHandler = Callable[[BaseException], None]
 
 
-class ErrorHandlerSupport(ABC):
+class ErrorHandlerSupport:
 
     def __init__(self) -> None:
         super().__init__()

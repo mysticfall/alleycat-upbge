@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 
 from alleycat.reactive import ReactiveObject
 from rx import operators as ops
@@ -8,7 +8,7 @@ from alleycat.common import ErrorHandlerSupport
 from alleycat.event import EventLoopScheduler
 
 
-class EventLoopAware(ErrorHandlerSupport, ReactiveObject, ABC):
+class EventLoopAware(ErrorHandlerSupport, ReactiveObject):
 
     def __init__(self, scheduler: EventLoopScheduler) -> None:
         self._scheduler = not_empty(scheduler)
