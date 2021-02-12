@@ -87,6 +87,12 @@ class BaseNodeTree(Generic[T], NodeStructure[T], NodeTree):
     def valid(self, value: bool) -> None:
         self._valid = value
 
+    def validate(self) -> bool:
+        # noinspection PyTypeChecker
+        tuple(map(self.links.remove, filter(lambda l: not l.is_valid, self.links)))
+
+        return super().validate()
+
     def start(self, context: T) -> None:
         super().start(context)
 
