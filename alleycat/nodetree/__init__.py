@@ -1,2 +1,3 @@
 from .base import NodeStructure, BaseNode, BaseNodeTree
-from .socket import NodeSocketFloat0To1
+from .value import ValueNode, ValueSocket
+from .socket import NodeSocketFloat0, NodeSocketFloat0To1
