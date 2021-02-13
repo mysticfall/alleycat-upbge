@@ -37,7 +37,7 @@ class RuntimeAnimationContext(AnimationContext):
             priority=priority,
             blendin=blend,
             play_mode=play_mode.value,
-            layer_weight=1.0 - self.weight,
+            layer_weight=self.weight,
             speed=self.speed,
             blend_mode=blend_mode.value)
 

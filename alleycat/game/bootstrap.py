@@ -58,11 +58,14 @@ class Bootstrap(LoggingSupport, KX_PythonComponent):
 
             sys.__excepthook__(tpe, value, traceback)
 
+        self.scheduler = self.context.scheduler()
+
         # noinspection SpellCheckingInspection
         sys.excepthook = except_hook
 
-        self.context.wire(modules=[sys.modules["alleycat.actor"]])
-        self.scheduler = self.context.scheduler()
+        self.context.wire(modules=[
+            sys.modules["alleycat.actor"],
+            sys.modules["alleycat.animation.runtime"]])
 
         self.logger.info("Bootstrap has completed successfully.")
 

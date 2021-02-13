@@ -1,16 +1,19 @@
 from abc import abstractmethod
 
-from bpy.types import Node
-
-from alleycat.animation import AnimationContext
+from alleycat.animation import AnimationContext, AnimationLoopAware
 from alleycat.animation.addon import AnimationNodeTree
+from alleycat.nodetree import BaseNode
 
 
-class AnimationNode(Node):
+class AnimationNode(AnimationLoopAware, BaseNode[AnimationContext]):
 
     @classmethod
     def poll(cls, tree: AnimationNodeTree) -> bool:
         return tree.bl_idname == AnimationNodeTree.bl_idname
+
+    @abstractmethod
+    def depth(self) -> int:
+        pass
 
     @abstractmethod
     def advance(self, context: AnimationContext) -> None:

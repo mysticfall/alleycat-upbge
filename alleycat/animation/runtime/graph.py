@@ -1,11 +1,14 @@
 from collections import OrderedDict
+from typing import Optional
 
 from alleycat.reactive import ReactiveObject
 from bge.types import KX_GameObject, KX_PythonComponent
 from bpy.types import NodeTree
 from dependency_injector.wiring import Provide, inject
+from rx import operators as ops
+from validator_collection import not_empty
 
-from alleycat.animation.addon import AnimationOutputNode
+from alleycat.animation.addon import AnimationNodeTree
 from alleycat.animation.runtime import RuntimeAnimationContext
 from alleycat.event import EventLoopScheduler
 from alleycat.game import GameContext
@@ -20,7 +23,9 @@ class AnimationGraph(LoggingSupport, ReactiveObject, KX_PythonComponent):
 
     animation_context: RuntimeAnimationContext
 
-    output: AnimationOutputNode
+    tree: AnimationNodeTree
+
+    timestamp: Optional[float]
 
     # noinspection PyUnusedLocal
     def __init__(self, obj: KX_GameObject):
@@ -32,22 +37,26 @@ class AnimationGraph(LoggingSupport, ReactiveObject, KX_PythonComponent):
             args: dict,
             input_map: InputMap = Provide[GameContext.input.mappings],
             scheduler: EventLoopScheduler = Provide[GameContext.scheduler]) -> None:
-        tree: NodeTree = args["Animation"]
+        self.tree = not_empty(args["Animation"])
 
         self.animation_context = RuntimeAnimationContext(self.object)
 
-        self.logger.info("Loading animation graph: %s.", tree)
+        self.logger.info("Loading animation graph: %s.", self.tree)
 
-        for node in tree.nodes:
+        self.tree.start(self.animation_context)
+
+        for node in self.tree.nodes:
             self.logger.info("Found node: %s.", node)
 
-        try:
-            self.output = next(filter(lambda n: isinstance(n, AnimationOutputNode), tree.nodes))
-        except StopIteration:
-            pass
+        def process(delta: float):
+            self.animation_context.time_delta = delta
+            self.tree.advance(self.animation_context)
 
-        self.logger.info("Output node: %s", self.output)
+        deltas = scheduler.on_process.pipe(
+            ops.pairwise(),
+            ops.map(lambda t: (t[1] - t[0]).total_seconds()))
+
+        deltas.subscribe(process, on_error=self.error_handler)
 
     def update(self) -> None:
-        if self.output:
-            self.output.advance(self.animation_context)
+        pass

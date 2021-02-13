@@ -29,23 +29,35 @@ class BlendMode(Enum):
 class AnimationContext(ABC):
     __slots__ = ["_time_delta", "_layer", "_weight", "_speed"]
 
-    def __init__(self, time_delta: float = 0, layer: int = 10000) -> None:
-        self._time_delta = validators.float(time_delta, minimum=0.0)
-        self._layer = validators.integer(layer, minimum=0)
-        self._weight = 1.0
+    def __init__(self, time_delta: float = 0, layer: int = 0, weight: float = 1.0) -> None:
+        self.time_delta = time_delta
+        self.layer = layer
+        self.weight = weight
         self._speed = 1.0
 
     @property
     def time_delta(self) -> float:
         return self._time_delta
 
+    @time_delta.setter
+    def time_delta(self, value: float) -> None:
+        self._time_delta = validators.float(value, minimum=0.0)
+
     @property
     def layer(self) -> int:
         return self._layer
 
+    @layer.setter
+    def layer(self, value: int) -> None:
+        self._layer = validators.integer(value, minimum=0)
+
     @property
     def weight(self) -> float:
         return self._weight
+
+    @weight.setter
+    def weight(self, value: float) -> None:
+        self._weight = validators.float(value, minimum=0.0, maximum=1.0)
 
     @property
     def speed(self) -> float:
@@ -71,12 +83,13 @@ class AnimationContext(ABC):
     def action(self) -> Maybe[Action]:
         pass
 
-    @property
+    # TODO See python/mypy#1362 and python/mypy#4165. I HATE Python.
+    @property  # type: ignore
     @abstractmethod
     def frame(self) -> float:
         pass
 
-    @frame.setter
+    @frame.setter  # type: ignore
     @abstractmethod
     def frame(self, value: float) -> None:
         pass
