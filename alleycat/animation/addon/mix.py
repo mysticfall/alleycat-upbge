@@ -1,6 +1,7 @@
 from typing import Optional, cast
 
 from bpy.types import Context, NodeLink, NodeSocket
+from mathutils import Vector
 from returns.maybe import Maybe, Nothing
 from validator_collection import not_empty
 
@@ -80,7 +81,7 @@ class MixAnimationNode(AnimationNode):
             link.is_valid = False
 
     def advance(self, context: AnimationContext) -> None:
-        self.input1.map(lambda i1: self.input2.map(lambda i2: self.process(i1, i2, context)))
+        return self.input1.map(lambda i1: self.input2.map(lambda i2: self.process(i1, i2, context)).value_or(Vector((0, 0, 0)))).value_or(Vector((0,0,0)))
 
     def process(self, input1: AnimationNode, input2: AnimationNode, context: AnimationContext) -> None:
         not_empty(input1)
@@ -90,9 +91,11 @@ class MixAnimationNode(AnimationNode):
 
         context.weight = self.mix
 
-        input1.advance(context)
+        rm1 = input1.advance(context)
 
         context.layer -= input1.depth
         context.weight = 1.0 - self.mix
 
-        input2.advance(context)
+        rm2 = input2.advance(context)
+
+        return rm1 * (1 - self.mix) + rm2 * self.mix

@@ -1,6 +1,7 @@
 from typing import List, cast
 
 from bpy.types import Context, Node, NodeSocketStandard, UILayout
+from mathutils import Vector
 from nodeitems_utils import NodeCategory
 from returns.maybe import Maybe, Nothing, Some
 from validator_collection import not_empty
@@ -45,7 +46,7 @@ class AnimationNodeTree(AnimationLoopAware, BaseNodeTree[AnimationContext]):
         return self._output
 
     def advance(self, context: AnimationContext) -> None:
-        self.output.map(lambda o: o.advance(not_empty(context)))
+        return self.output.map(lambda o: o.advance(not_empty(context))).value_or(Vector((0, 0, 0)))
 
 
 class AnimationNodeCategory(NodeCategory):

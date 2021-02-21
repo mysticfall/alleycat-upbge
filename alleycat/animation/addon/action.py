@@ -2,6 +2,7 @@ from typing import Optional
 
 from bpy.props import PointerProperty
 from bpy.types import Action, Context, NodeLink, UILayout
+from mathutils import Vector
 from validator_collection import validators
 
 from alleycat.animation import AnimationContext, PlayMode
@@ -67,9 +68,18 @@ class PlayActionNode(AnimationNode):
         fps = 24.0
         total = self.action.frame_range[-1]
 
-        start_frame = self.last_frame if self.last_frame < total else 0
+        start_frame = self.last_frame if self.last_frame < total and context.weight < 1 else 0
         end_frame = min(start_frame + context.time_delta * fps, total)
 
         self.last_frame = end_frame
 
+        group = self.action.groups.get("root")
+        location = Vector((0, 0, 0))
+
+        for i in range(3):
+            channel = group.channels[i]
+            location[channel.array_index] = channel.evaluate(start_frame)
+
         context.play(self.action, start_frame=start_frame, end_frame=end_frame, play_mode=PlayMode.Play)
+
+        return location

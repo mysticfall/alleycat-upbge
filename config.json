@@ -38,13 +38,15 @@
             "type": "key_axis",
             "positive_key": "AKEY",
             "negative_key": "DKEY",
-            "sensitivity": 0.09
+            "sensitivity": 1
           },
           "y": {
             "type": "key_axis",
             "positive_key": "WKEY",
             "negative_key": "SKEY",
-            "sensitivity": 0.16
+            "window_size": 1,
+            "window_shift": 0.05,
+            "sensitivity": 1
           }
         }
       }

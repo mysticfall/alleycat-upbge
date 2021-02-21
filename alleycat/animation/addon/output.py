@@ -1,6 +1,7 @@
 from typing import Optional, cast
 
 from bpy.types import Context, NodeLink
+from mathutils import Vector
 from returns.maybe import Maybe, Nothing
 from validator_collection import not_empty
 
@@ -59,4 +60,4 @@ class AnimationOutputNode(AnimationNode):
     def advance(self, context: AnimationContext) -> None:
         context.layer = self.depth
 
-        self.input.map(lambda i: i.advance(not_empty(context)))
+        return self.input.map(lambda i: i.advance(not_empty(context))).value_or(Vector((0, 0, 0)))
