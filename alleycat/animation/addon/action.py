@@ -2,6 +2,7 @@ from typing import Optional
 
 from bpy.props import PointerProperty
 from bpy.types import Action, Context, NodeLink, UILayout
+from mathutils import Vector
 from returns.maybe import Maybe, Nothing, Some
 from validator_collection import validators
 
@@ -20,6 +21,8 @@ class PlayActionNode(AnimationNode):
     action: PointerProperty(name="Action", type=Action, options={"LIBRARY_EDITABLE"})  # type:ignore
 
     _result: Maybe[AnimationResult] = Nothing
+
+    _last_offset: Optional[Vector] = None
 
     # noinspection PyUnusedLocal
     def init(self, context: Optional[Context]) -> None:
@@ -84,9 +87,19 @@ class PlayActionNode(AnimationNode):
 
         group = self.action.groups.get("root")
 
+        offset = Vector((0, 0, 0))
+
         for i in range(3):
             channel = group.channels[i]
-            result.offset[channel.array_index] = channel.evaluate(start_frame)
+            offset[channel.array_index] = channel.evaluate(start_frame)
+
+        if self._last_offset:
+            delta = self._last_offset - offset
+
+            if delta.length_squared < 0.001:
+                result.offset = delta
+
+        self._last_offset = offset
 
         animator.play(self.action, start_frame=start_frame, end_frame=end_frame, play_mode=PlayMode.Play)
 

@@ -62,8 +62,6 @@ class AnimationGraph(LoggingSupport, ReactiveObject, KX_PythonComponent):
 
         rv.observe(move_input.value).subscribe(move, on_error=self.error_handler)
 
-        self.last_rm_loc = Vector((0, 0, 0))
-
         def advance(delta: float) -> Maybe[AnimationResult]:
             self.animator.time_delta = delta
 
@@ -71,13 +69,10 @@ class AnimationGraph(LoggingSupport, ReactiveObject, KX_PythonComponent):
 
         def process_result(result: AnimationResult) -> None:
             # noinspection PyUnresolvedReferences
-            rm = self.last_rm_loc - result.offset
+            rm = result.offset
             rm.z = 0
 
-            self.last_rm_loc = result.offset.copy()
-
-            if 0 < rm.length_squared < 0.001:
-                self.object.applyMovement(rm, True)
+            self.object.applyMovement(rm, True)
 
         deltas = scheduler.on_process.pipe(
             ops.pairwise(),
