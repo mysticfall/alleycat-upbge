@@ -2,10 +2,10 @@ from typing import Optional
 
 from bpy.props import PointerProperty
 from bpy.types import Action, Context, NodeLink, UILayout
-from mathutils import Vector
+from returns.maybe import Maybe, Nothing, Some
 from validator_collection import validators
 
-from alleycat.animation import Animator, PlayMode
+from alleycat.animation import AnimationResult, Animator, PlayMode
 from alleycat.animation.addon import AnimationNode, NodeSocketAnimation
 from alleycat.nodetree import NodeSocketFloat, NodeSocketFloat0, NodeSocketFloat0To1
 
@@ -18,6 +18,8 @@ class PlayActionNode(AnimationNode):
     bl_icon: str = "ACTION"
 
     action: PointerProperty(name="Action", type=Action, options={"LIBRARY_EDITABLE"})  # type:ignore
+
+    _result: Maybe[AnimationResult] = Nothing
 
     # noinspection PyUnusedLocal
     def init(self, context: Optional[Context]) -> None:
@@ -61,9 +63,16 @@ class PlayActionNode(AnimationNode):
 
         layout.prop(self, "action")
 
-    def advance(self, animator: Animator) -> None:
+    def advance(self, animator: Animator) -> Maybe[AnimationResult]:
+        if self._result == Nothing:
+            result = AnimationResult()
+            self._result = Some(result)
+        else:
+            result = self._result.unwrap()
+            result.reset()
+
         if not self.action:
-            return
+            return Nothing
 
         fps = 24.0
         total = self.action.frame_range[-1]
@@ -74,12 +83,11 @@ class PlayActionNode(AnimationNode):
         self.last_frame = end_frame
 
         group = self.action.groups.get("root")
-        location = Vector((0, 0, 0))
 
         for i in range(3):
             channel = group.channels[i]
-            location[channel.array_index] = channel.evaluate(start_frame)
+            result.offset[channel.array_index] = channel.evaluate(start_frame)
 
         animator.play(self.action, start_frame=start_frame, end_frame=end_frame, play_mode=PlayMode.Play)
 
-        return location
+        return self._result

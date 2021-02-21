@@ -1,11 +1,10 @@
 from typing import Optional, cast
 
 from bpy.types import Context, NodeLink, NodeSocket
-from mathutils import Vector
 from returns.maybe import Maybe, Nothing
 from validator_collection import not_empty
 
-from alleycat.animation import Animator
+from alleycat.animation import AnimationResult, Animator
 from alleycat.animation.addon import AnimationNode, NodeSocketAnimation
 from alleycat.nodetree import NodeSocketFloat, NodeSocketFloat0To1
 
@@ -16,6 +15,8 @@ class MixAnimationNode(AnimationNode):
     bl_label: str = "Mix"
 
     bl_icon: str = "ACTION"
+
+    _result: Optional[AnimationResult] = None
 
     # noinspection PyUnusedLocal
     def init(self, context: Optional[Context]) -> None:
@@ -80,22 +81,33 @@ class MixAnimationNode(AnimationNode):
         else:
             link.is_valid = False
 
-    def advance(self, animator: Animator) -> None:
-        return self.input1.map(lambda i1: self.input2.map(lambda i2: self.process(i1, i2, animator)).value_or(Vector((0, 0, 0)))).value_or(Vector((0, 0, 0)))
+    def advance(self, animator: Animator) -> Maybe[AnimationResult]:
+        return self.input1.bind(lambda i1: self.input2.bind(lambda i2: self.process(i1, i2, animator)))
 
-    def process(self, input1: AnimationNode, input2: AnimationNode, animator: Animator) -> None:
+    def process(self, input1: AnimationNode, input2: AnimationNode, animator: Animator) -> Maybe[AnimationResult]:
         not_empty(input1)
         not_empty(input2)
 
         not_empty(animator)
 
+        if self._result:
+            self._result.reset()
+        else:
+            self._result = AnimationResult()
+
         animator.weight = self.mix
 
-        rm1 = input1.advance(animator)
+        result1 = input1.advance(animator)
 
         animator.layer -= input1.depth
         animator.weight = 1.0 - self.mix
 
-        rm2 = input2.advance(animator)
+        result2 = input2.advance(animator)
 
-        return rm1 * (1 - self.mix) + rm2 * self.mix
+        return result1.bind(lambda r1: result2.map(lambda r2: self._merge_result(r1, r2)))
+
+    def _merge_result(self, r1: AnimationResult, r2: AnimationResult) -> AnimationResult:
+        result = r1.copy(self._result)
+        result.offset = r1.offset * (1 - self.mix) + r2.offset * self.mix
+
+        return result

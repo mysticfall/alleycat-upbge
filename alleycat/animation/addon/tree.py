@@ -1,12 +1,11 @@
 from typing import List, cast
 
 from bpy.types import Context, Node, NodeSocketStandard, UILayout
-from mathutils import Vector
 from nodeitems_utils import NodeCategory
 from returns.maybe import Maybe, Nothing, Some
 from validator_collection import not_empty
 
-from alleycat.animation import AnimationLoopAware, Animator
+from alleycat.animation import AnimationLoopAware, AnimationResult, Animator
 from alleycat.nodetree import BaseNodeTree
 
 
@@ -45,8 +44,8 @@ class AnimationNodeTree(AnimationLoopAware, BaseNodeTree):
     def output(self) -> Maybe[AnimationLoopAware]:
         return self._output
 
-    def advance(self, animator: Animator) -> None:
-        return self.output.map(lambda o: o.advance(not_empty(animator))).value_or(Vector((0, 0, 0)))
+    def advance(self, animator: Animator) -> Maybe[AnimationResult]:
+        return self.output.bind(lambda o: o.advance(not_empty(animator)))
 
 
 class AnimationNodeCategory(NodeCategory):

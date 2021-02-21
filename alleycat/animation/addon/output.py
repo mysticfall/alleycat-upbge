@@ -1,11 +1,10 @@
 from typing import Optional, cast
 
 from bpy.types import Context, NodeLink
-from mathutils import Vector
 from returns.maybe import Maybe, Nothing
 from validator_collection import not_empty
 
-from alleycat.animation import Animator
+from alleycat.animation import AnimationResult, Animator
 from alleycat.animation.addon import AnimationNode, NodeSocketAnimation
 
 
@@ -57,7 +56,9 @@ class AnimationOutputNode(AnimationNode):
 
         link.is_valid = isinstance(link.from_socket, NodeSocketAnimation)
 
-    def advance(self, animator: Animator) -> None:
+    def advance(self, animator: Animator) -> Maybe[AnimationResult]:
+        not_empty(animator)
+
         animator.layer = self.depth
 
-        return self.input.map(lambda i: i.advance(not_empty(animator))).value_or(Vector((0, 0, 0)))
+        return self.input.bind(lambda i: i.advance(not_empty(animator)))

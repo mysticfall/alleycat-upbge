@@ -1,6 +1,8 @@
 from abc import abstractmethod
 
-from alleycat.animation import Animator
+from returns.maybe import Maybe
+
+from alleycat.animation import AnimationResult, Animator
 
 
 # We can't make it an actual abstract type (i.e. ABC) as it will complicate things when
@@ -9,5 +11,5 @@ from alleycat.animation import Animator
 class AnimationLoopAware:
 
     @abstractmethod
-    def advance(self, animator: Animator) -> None:
+    def advance(self, animator: Animator) -> Maybe[AnimationResult]:
         pass

@@ -6,9 +6,11 @@ from bge.types import KX_GameObject, KX_PythonComponent
 from bpy.types import NodeTree
 from dependency_injector.wiring import Provide, inject
 from mathutils import Vector
+from returns.maybe import Maybe
 from rx import operators as ops
 from validator_collection import not_empty
 
+from alleycat.animation import AnimationResult
 from alleycat.animation.addon import AnimationNodeTree, MixAnimationNode
 from alleycat.animation.runtime import GameObjectAnimator
 from alleycat.event import EventLoopScheduler
@@ -62,14 +64,17 @@ class AnimationGraph(LoggingSupport, ReactiveObject, KX_PythonComponent):
 
         self.last_rm_loc = Vector((0, 0, 0))
 
-        def process(delta: float):
+        def advance(delta: float) -> Maybe[AnimationResult]:
             self.animator.time_delta = delta
-            offset = self.tree.advance(self.animator)
 
-            rm = self.last_rm_loc - offset
+            return self.tree.advance(self.animator)
+
+        def process_result(result: AnimationResult) -> None:
+            # noinspection PyUnresolvedReferences
+            rm = self.last_rm_loc - result.offset
             rm.z = 0
 
-            self.last_rm_loc = offset
+            self.last_rm_loc = result.offset.copy()
 
             if 0 < rm.length_squared < 0.001:
                 self.object.applyMovement(rm, True)
@@ -78,7 +83,7 @@ class AnimationGraph(LoggingSupport, ReactiveObject, KX_PythonComponent):
             ops.pairwise(),
             ops.map(lambda t: (t[1] - t[0]).total_seconds()))
 
-        deltas.subscribe(process, on_error=self.error_handler)
+        deltas.subscribe(lambda d: advance(d).map(process_result).value_or(None), on_error=self.error_handler)
 
     def update(self) -> None:
         pass
