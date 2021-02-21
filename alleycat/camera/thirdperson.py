@@ -33,7 +33,7 @@ class ThirdPersonCamera(CameraControl):
         self.logger.info("Input map: %s", input_map)
         self.logger.info("Pivot object: %s", self.pivot)
 
-        self.distance = 2.0
+        self.distance = 1.0
 
     def update(self) -> None:
         up_axis = self.pivot.worldOrientation @ Vector((0, 0, 1))
@@ -46,4 +46,4 @@ class ThirdPersonCamera(CameraControl):
         offset = self.pivot.worldOrientation @ mat @ Vector((0, -1, 0)) * self.distance
 
         self.object.worldOrientation = orientation
-        self.object.worldPosition = self.pivot.worldPosition - offset + up_axis * height * 0.7
+        self.object.worldPosition = self.pivot.worldPosition - offset + up_axis * height * 0.8

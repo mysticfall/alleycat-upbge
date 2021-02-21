@@ -55,7 +55,7 @@ class Character(LoggingSupport, ReactiveObject, KX_PythonComponent):
         pos = self.object.worldPosition.copy()
 
         if (pos - self._last_pos).length_squared > 0.0001:
-            angle = sign(self.view.yaw) * min(radians(1), abs(self.view.yaw))
+            angle = sign(self.view.yaw) * min(radians(5), abs(self.view.yaw))
 
             self.view.yaw -= angle
             self.object.applyRotation(Vector((0, 0, -angle)), True)
