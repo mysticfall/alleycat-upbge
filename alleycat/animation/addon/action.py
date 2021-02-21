@@ -5,7 +5,7 @@ from bpy.types import Action, Context, NodeLink, UILayout
 from mathutils import Vector
 from validator_collection import validators
 
-from alleycat.animation import AnimationContext, PlayMode
+from alleycat.animation import Animator, PlayMode
 from alleycat.animation.addon import AnimationNode, NodeSocketAnimation
 from alleycat.nodetree import NodeSocketFloat, NodeSocketFloat0, NodeSocketFloat0To1
 
@@ -61,15 +61,15 @@ class PlayActionNode(AnimationNode):
 
         layout.prop(self, "action")
 
-    def advance(self, context: AnimationContext) -> None:
+    def advance(self, animator: Animator) -> None:
         if not self.action:
             return
 
         fps = 24.0
         total = self.action.frame_range[-1]
 
-        start_frame = self.last_frame if self.last_frame < total and context.weight < 1 else 0
-        end_frame = min(start_frame + context.time_delta * fps, total)
+        start_frame = self.last_frame if self.last_frame < total and animator.weight < 1 else 0
+        end_frame = min(start_frame + animator.time_delta * fps, total)
 
         self.last_frame = end_frame
 
@@ -80,6 +80,6 @@ class PlayActionNode(AnimationNode):
             channel = group.channels[i]
             location[channel.array_index] = channel.evaluate(start_frame)
 
-        context.play(self.action, start_frame=start_frame, end_frame=end_frame, play_mode=PlayMode.Play)
+        animator.play(self.action, start_frame=start_frame, end_frame=end_frame, play_mode=PlayMode.Play)
 
         return location

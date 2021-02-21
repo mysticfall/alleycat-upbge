@@ -1,15 +1,13 @@
 from abc import abstractmethod
-from typing import Any, Dict, Generic, TypeVar, cast
+from typing import Any, Dict, cast
 
 from bpy.types import Node, NodeTree
 from validator_collection import not_empty
 
 from alleycat.log import LoggingSupport
 
-T = TypeVar("T")
 
-
-class NodeStructure(Generic[T], LoggingSupport):
+class NodeStructure(LoggingSupport):
 
     @property
     @abstractmethod
@@ -20,9 +18,7 @@ class NodeStructure(Generic[T], LoggingSupport):
     def valid(self, value: bool) -> None:
         pass
 
-    def start(self, context: T) -> None:
-        not_empty(context)
-
+    def start(self) -> None:
         self.valid = self.validate()
 
         self.logger.info("Node has started (valid: %s).", self.valid)
@@ -36,7 +32,7 @@ class NodeStructure(Generic[T], LoggingSupport):
         self.valid = self.validate()
 
 
-class BaseNode(Generic[T], NodeStructure[T], Node):
+class BaseNode(NodeStructure, Node):
     _attributes: Dict[int, Dict[str, Any]] = dict()
 
     @property
@@ -76,7 +72,7 @@ class BaseNode(Generic[T], NodeStructure[T], Node):
             del self._attributes[key]
 
 
-class BaseNodeTree(Generic[T], NodeStructure[T], NodeTree):
+class BaseNodeTree(NodeStructure, NodeTree):
     _valid: bool = False
 
     @property
@@ -93,8 +89,8 @@ class BaseNodeTree(Generic[T], NodeStructure[T], NodeTree):
 
         return super().validate()
 
-    def start(self, context: T) -> None:
-        super().start(context)
+    def start(self) -> None:
+        super().start()
 
         for node in self.nodes:
-            cast(NodeStructure, node).start(context)
+            cast(NodeStructure, node).start()

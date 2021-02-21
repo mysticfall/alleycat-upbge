@@ -6,11 +6,11 @@ from nodeitems_utils import NodeCategory
 from returns.maybe import Maybe, Nothing, Some
 from validator_collection import not_empty
 
-from alleycat.animation import AnimationContext, AnimationLoopAware
+from alleycat.animation import AnimationLoopAware, Animator
 from alleycat.nodetree import BaseNodeTree
 
 
-class AnimationNodeTree(AnimationLoopAware, BaseNodeTree[AnimationContext]):
+class AnimationNodeTree(AnimationLoopAware, BaseNodeTree):
     bl_idname: str = "alleycat.animation.addon.AnimationNodeTree"
 
     bl_label: str = "AlleyCat Animation"
@@ -45,8 +45,8 @@ class AnimationNodeTree(AnimationLoopAware, BaseNodeTree[AnimationContext]):
     def output(self) -> Maybe[AnimationLoopAware]:
         return self._output
 
-    def advance(self, context: AnimationContext) -> None:
-        return self.output.map(lambda o: o.advance(not_empty(context))).value_or(Vector((0, 0, 0)))
+    def advance(self, animator: Animator) -> None:
+        return self.output.map(lambda o: o.advance(not_empty(animator))).value_or(Vector((0, 0, 0)))
 
 
 class AnimationNodeCategory(NodeCategory):

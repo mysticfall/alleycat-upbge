@@ -10,7 +10,7 @@ from rx import operators as ops
 from validator_collection import not_empty
 
 from alleycat.animation.addon import AnimationNodeTree, MixAnimationNode
-from alleycat.animation.runtime import RuntimeAnimationContext
+from alleycat.animation.runtime import GameObjectAnimator
 from alleycat.event import EventLoopScheduler
 from alleycat.game import GameContext
 from alleycat.input import InputMap
@@ -22,7 +22,7 @@ class AnimationGraph(LoggingSupport, ReactiveObject, KX_PythonComponent):
         ("Animation", NodeTree),
     ))
 
-    animation_context: RuntimeAnimationContext
+    animator: GameObjectAnimator
 
     tree: AnimationNodeTree
 
@@ -40,11 +40,11 @@ class AnimationGraph(LoggingSupport, ReactiveObject, KX_PythonComponent):
             scheduler: EventLoopScheduler = Provide[GameContext.scheduler]) -> None:
         self.tree = not_empty(args["Animation"])
 
-        self.animation_context = RuntimeAnimationContext(self.object)
+        self.animator = GameObjectAnimator(self.object)
 
         self.logger.info("Loading animation graph: %s.", self.tree)
 
-        self.tree.start(self.animation_context)
+        self.tree.start()
 
         for node in self.tree.nodes:
             self.logger.info("Found node: %s.", node)
@@ -63,8 +63,8 @@ class AnimationGraph(LoggingSupport, ReactiveObject, KX_PythonComponent):
         self.last_rm_loc = Vector((0, 0, 0))
 
         def process(delta: float):
-            self.animation_context.time_delta = delta
-            offset = self.tree.advance(self.animation_context)
+            self.animator.time_delta = delta
+            offset = self.tree.advance(self.animator)
 
             rm = self.last_rm_loc - offset
             rm.z = 0

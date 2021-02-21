@@ -1,2 +1,2 @@
-from .context import RuntimeAnimationContext
+from .animator import GameObjectAnimator
 from .graph import AnimationGraph

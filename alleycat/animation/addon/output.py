@@ -5,7 +5,7 @@ from mathutils import Vector
 from returns.maybe import Maybe, Nothing
 from validator_collection import not_empty
 
-from alleycat.animation import AnimationContext
+from alleycat.animation import Animator
 from alleycat.animation.addon import AnimationNode, NodeSocketAnimation
 
 
@@ -57,7 +57,7 @@ class AnimationOutputNode(AnimationNode):
 
         link.is_valid = isinstance(link.from_socket, NodeSocketAnimation)
 
-    def advance(self, context: AnimationContext) -> None:
-        context.layer = self.depth
+    def advance(self, animator: Animator) -> None:
+        animator.layer = self.depth
 
-        return self.input.map(lambda i: i.advance(not_empty(context))).value_or(Vector((0, 0, 0)))
+        return self.input.map(lambda i: i.advance(not_empty(animator))).value_or(Vector((0, 0, 0)))

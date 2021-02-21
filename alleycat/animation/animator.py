@@ -26,7 +26,7 @@ class BlendMode(Enum):
     Add = 1
 
 
-class AnimationContext(ABC):
+class Animator(ABC):
     __slots__ = ["_time_delta", "_layer", "_weight", "_speed"]
 
     def __init__(self, time_delta: float = 0, layer: int = 0, weight: float = 1.0) -> None:

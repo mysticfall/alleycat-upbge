@@ -5,7 +5,7 @@ from mathutils import Vector
 from returns.maybe import Maybe, Nothing
 from validator_collection import not_empty
 
-from alleycat.animation import AnimationContext
+from alleycat.animation import Animator
 from alleycat.animation.addon import AnimationNode, NodeSocketAnimation
 from alleycat.nodetree import NodeSocketFloat, NodeSocketFloat0To1
 
@@ -80,22 +80,22 @@ class MixAnimationNode(AnimationNode):
         else:
             link.is_valid = False
 
-    def advance(self, context: AnimationContext) -> None:
-        return self.input1.map(lambda i1: self.input2.map(lambda i2: self.process(i1, i2, context)).value_or(Vector((0, 0, 0)))).value_or(Vector((0,0,0)))
+    def advance(self, animator: Animator) -> None:
+        return self.input1.map(lambda i1: self.input2.map(lambda i2: self.process(i1, i2, animator)).value_or(Vector((0, 0, 0)))).value_or(Vector((0, 0, 0)))
 
-    def process(self, input1: AnimationNode, input2: AnimationNode, context: AnimationContext) -> None:
+    def process(self, input1: AnimationNode, input2: AnimationNode, animator: Animator) -> None:
         not_empty(input1)
         not_empty(input2)
 
-        not_empty(context)
+        not_empty(animator)
 
-        context.weight = self.mix
+        animator.weight = self.mix
 
-        rm1 = input1.advance(context)
+        rm1 = input1.advance(animator)
 
-        context.layer -= input1.depth
-        context.weight = 1.0 - self.mix
+        animator.layer -= input1.depth
+        animator.weight = 1.0 - self.mix
 
-        rm2 = input2.advance(context)
+        rm2 = input2.advance(animator)
 
         return rm1 * (1 - self.mix) + rm2 * self.mix

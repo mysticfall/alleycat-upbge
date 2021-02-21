@@ -1,11 +1,11 @@
 from abc import abstractmethod
 
-from alleycat.animation import AnimationContext, AnimationLoopAware
+from alleycat.animation import AnimationLoopAware, Animator
 from alleycat.animation.addon import AnimationNodeTree
 from alleycat.nodetree import BaseNode
 
 
-class AnimationNode(AnimationLoopAware, BaseNode[AnimationContext]):
+class AnimationNode(AnimationLoopAware, BaseNode):
 
     @classmethod
     def poll(cls, tree: AnimationNodeTree) -> bool:
@@ -16,5 +16,5 @@ class AnimationNode(AnimationLoopAware, BaseNode[AnimationContext]):
         pass
 
     @abstractmethod
-    def advance(self, context: AnimationContext) -> None:
+    def advance(self, animator: Animator) -> None:
         pass

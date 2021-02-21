@@ -1,6 +1,6 @@
 from abc import abstractmethod
 
-from alleycat.animation import AnimationContext
+from alleycat.animation import Animator
 
 
 # We can't make it an actual abstract type (i.e. ABC) as it will complicate things when
@@ -9,5 +9,5 @@ from alleycat.animation import AnimationContext
 class AnimationLoopAware:
 
     @abstractmethod
-    def advance(self, context: AnimationContext) -> None:
+    def advance(self, animator: Animator) -> None:
         pass

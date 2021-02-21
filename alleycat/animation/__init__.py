@@ -1,2 +1,2 @@
-from .context import PlayMode, BlendMode, AnimationContext
+from .animator import PlayMode, BlendMode, Animator
 from .loop import AnimationLoopAware

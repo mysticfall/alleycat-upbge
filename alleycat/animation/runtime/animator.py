@@ -6,10 +6,10 @@ from bpy.types import Action
 from returns.maybe import Maybe
 from validator_collection import not_empty
 
-from alleycat.animation import AnimationContext, BlendMode, PlayMode
+from alleycat.animation import Animator, BlendMode, PlayMode
 
 
-class RuntimeAnimationContext(AnimationContext):
+class GameObjectAnimator(Animator):
     __slots__ = ["_target"]
 
     def __init__(self, target: KX_GameObject, time_delta: float = 0, layer: int = 10000) -> None:
