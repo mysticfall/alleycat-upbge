@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from abc import ABC
+from abc import ABC, abstractmethod
 from enum import Enum
 from itertools import chain
 from typing import Any, Callable, Mapping, Optional, Sequence
@@ -18,6 +18,7 @@ from validator_collection.validators import json, not_empty, numeric
 
 from alleycat import log
 from alleycat.common import ConfigMetaSchema
+from alleycat.event import EventLoopScheduler
 from alleycat.input import Input, InputBinding
 
 
@@ -31,13 +32,25 @@ class AxisInput(Input[float], ABC):
     def __init__(
             self,
             init_value: float = 0.0,
+            window_size: float = 0,
+            window_shift: float = 0,
             sensitivity: float = 1.0,
             dead_zone: float = 0.0,
             enabled: bool = True) -> None:
-        self._dead_zone = numeric(dead_zone, minimum=0, maximum=1)
+        self._window_size = numeric(window_size, minimum=0, maximum=1)
+        self._window_shift = numeric(window_shift, minimum=0, maximum=1)
         self._sensitivity = numeric(sensitivity, minimum=0)
+        self._dead_zone = numeric(dead_zone, minimum=0, maximum=1)
 
         super().__init__(init_value=validators.float(init_value), enabled=enabled)
+
+    @property
+    def window_size(self) -> float:
+        return self._window_size
+
+    @property
+    def window_shift(self) -> float:
+        return self._window_shift
 
     @property
     def dead_zone(self) -> float:
@@ -56,11 +69,24 @@ class AxisInput(Input[float], ABC):
         self._sensitivity = numeric(value, minimum=0)
 
     @property
+    @abstractmethod
+    def scheduler(self) -> EventLoopScheduler:
+        pass
+
+    @property
     def modifiers(self) -> Sequence[Callable[[Observable], Observable]]:
-        return tuple(chain(super().modifiers, (
-            ops.map(lambda v: v * self.sensitivity),
-            ops.map(lambda v: v if abs(v) >= self.dead_zone else 0),
-            ops.map(lambda v: min(max(v, -1), 1)))))
+        axis_modifiers = (ops.map(lambda v: v * self.sensitivity),
+                          ops.map(lambda v: v if abs(v) >= self.dead_zone else 0),
+                          ops.map(lambda v: min(max(v, -1), 1)))
+
+        if self.window_size > 0:
+            smoothing = (ops.buffer_with_time(self.window_size, self.window_shift, self.scheduler),
+                         ops.filter(lambda v: len(v) > 0),
+                         ops.map(lambda v: sum(v) / len(v)))
+
+            return tuple(chain(super().modifiers, axis_modifiers, smoothing))
+
+        return tuple(chain(super().modifiers, axis_modifiers))
 
 
 class Axis2DBinding(InputBinding[AxisInput]):
@@ -79,7 +105,7 @@ class Axis2DBinding(InputBinding[AxisInput]):
         ops.map(lambda v: v.value_or(rx.return_value((0.0, 0.0)))),
         ops.switch_latest(),
         ops.map(lambda v: mathutils.Vector(v)))  # To allow test mockup. I know it's ugly but do we have any better way?
-    ).pipe(lambda b: (ops.do_action(b.log_value), ))
+    ).pipe(lambda b: (ops.do_action(b.log_value),))
 
     def __init__(
             self, name: str,

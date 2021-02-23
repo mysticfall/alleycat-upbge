@@ -12,6 +12,7 @@ from returns.maybe import Nothing, Some
 from rx import Observable
 from validator_collection.errors import JSONValidationError
 
+from alleycat.event import EventLoopScheduler
 from alleycat.input import Axis2DBinding, AxisInput, Input
 
 
@@ -25,6 +26,10 @@ class TestAxisInput(AxisInput):
 
     def create(self) -> Observable:
         return rv.observe(self.test_value)
+
+    @property
+    def scheduler(self) -> EventLoopScheduler:
+        return EventLoopScheduler()
 
     # noinspection PyUnusedLocal
     @classmethod

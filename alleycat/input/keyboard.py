@@ -10,7 +10,7 @@ from alleycat.reactive import RV, functions as rv
 from rx import Observable, operators as ops
 from rx.subject import Subject
 from validator_collection import is_string
-from validator_collection.validators import json, not_empty, numeric
+from validator_collection.validators import json, not_empty
 
 from alleycat import log
 from alleycat.common import ConfigMetaSchema
@@ -159,12 +159,15 @@ class KeyAxisInput(AxisInput):
 
         self._positive_key = positive_key
         self._negative_key = negative_key
-        self._window_size = numeric(window_size, minimum=0, maximum=1)
-        self._window_shift = numeric(window_shift, minimum=0, maximum=1)
 
         self._source = not_empty(source)
 
-        super().__init__(sensitivity=sensitivity, dead_zone=dead_zone, enabled=enabled)
+        super().__init__(
+            window_size=window_size,
+            window_shift=window_shift,
+            sensitivity=sensitivity,
+            dead_zone=dead_zone,
+            enabled=enabled)
 
         self.logger.debug("Creating axis with keys %s(+) and %s(-) (sensitivity=%f, dead_zone=%f).",
                           positive_key, negative_key, sensitivity, dead_zone)
@@ -178,29 +181,19 @@ class KeyAxisInput(AxisInput):
         return self._negative_key
 
     @property
-    def window_size(self) -> float:
-        return self._window_size
-
-    @property
-    def window_shift(self) -> float:
-        return self._window_shift
-
-    @property
     def source(self) -> KeyInputSource:
         return self._source
+
+    @property
+    def scheduler(self) -> EventLoopScheduler:
+        return self.source.scheduler
 
     def create(self) -> Observable:
         def get_value(key: int, pressed: Set[int]) -> float:
             return 1 if key in pressed else 0
 
-        operators = [ops.map(lambda p: get_value(self.positive_key, p) - get_value(self.negative_key, p))]
-
-        if self.window_size > 0:
-            operators.append(ops.buffer_with_time(self.window_size, self.window_shift, self.source.scheduler))
-            operators.append(ops.filter(lambda v: len(v) > 0))
-            operators.append(ops.map(lambda v: sum(v) / len(v)))
-
-        return rv.observe(self.source.pressed).pipe(*operators)
+        return rv.observe(self.source.pressed).pipe(
+            ops.map(lambda p: get_value(self.positive_key, p) - get_value(self.negative_key, p)))
 
     @classmethod
     def config_schema(cls) -> object:
@@ -242,8 +235,10 @@ class KeyAxisInput(AxisInput):
         json(config, cls.config_schema())
 
         enabled = "enabled" not in config or config["enabled"]
+
         window_size = config.get("window_size", 0.1)
         window_shift = config.get("window_shift", 0.01)
+
         sensitivity = config.get("sensitivity", 1.0)
         dead_zone = config.get("dead_zone", 0.0)
 

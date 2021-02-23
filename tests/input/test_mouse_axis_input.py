@@ -8,10 +8,15 @@ from alleycat.input import Axis2D, MouseAxisInput, MouseInputSource
 
 
 @fixture
-def scheduler(mocker: MockerFixture) -> EventLoopScheduler:
-    timer = mocker.patch(f"bge.logic.getFrameTime")
+def timer(mocker: MockerFixture):
+    timer = mocker.patch("bge.logic.getFrameTime")
     timer.return_value = 0.
 
+    return timer
+
+
+@fixture
+def scheduler(timer) -> EventLoopScheduler:
     return EventLoopScheduler()
 
 
@@ -24,13 +29,24 @@ def source(mocker: MockerFixture, scheduler: EventLoopScheduler) -> MouseInputSo
 
 
 @mark.parametrize("axis", Axis2D)
+@mark.parametrize("window_size", (0.5, 0.2))
+@mark.parametrize("window_shift", (0.03, 0.01))
 @mark.parametrize("sensitivity", (0.4, 0.9))
 @mark.parametrize("dead_zone", (0.1, 0.2))
 @mark.parametrize("enabled", (True, False))
-def test_from_config(axis: Axis2D, sensitivity: float, dead_zone: float, enabled: bool, source: MouseInputSource):
+def test_from_config(
+        axis: Axis2D,
+        window_size: float,
+        window_shift: float,
+        sensitivity: float,
+        dead_zone: float,
+        enabled: bool,
+        source: MouseInputSource):
     config = {
         "type": "mouse_axis",
         "axis": axis.name.lower(),
+        "window_size": window_size,
+        "window_shift": window_shift,
         "sensitivity": sensitivity,
         "dead_zone": dead_zone,
         "enabled": enabled
@@ -41,6 +57,8 @@ def test_from_config(axis: Axis2D, sensitivity: float, dead_zone: float, enabled
 
     assert input
     assert input.axis == axis
+    assert input.window_size == window_size
+    assert input.window_shift == window_shift
     assert input.sensitivity == sensitivity
     assert input.dead_zone == dead_zone
     assert input.enabled == enabled
@@ -57,6 +75,8 @@ def test_from_default_config(source: MouseInputSource):
 
     assert input
     assert input.axis == Axis2D.Y
+    assert input.window_size == 0.0
+    assert input.window_shift == 0.0
     assert input.sensitivity == 1.0
     assert input.dead_zone == 0.0
     assert input.enabled
@@ -117,7 +137,7 @@ def test_input(
     values = []
 
     # noinspection PyShadowingBuiltins
-    with MouseAxisInput(axis, source, sensitivity, dead_zone, enabled) as input:
+    with MouseAxisInput(axis, source, sensitivity=sensitivity, dead_zone=dead_zone, enabled=enabled) as input:
         rv.observe(input.value).subscribe(values.append)
 
         assert input.value == 0
@@ -191,3 +211,42 @@ def test_input_repeat(mocker: MockerFixture, source: MouseInputSource, scheduler
         scheduler.process()
 
         assert values == [0.0, -0.4, -0.4, 0.0, 0.0]
+
+
+@mark.parametrize("window_size", (0.1, 0.2))
+@mark.parametrize("window_shift", (0.02, 0.05))
+def test_input_interpolation(
+        timer,
+        window_size: float,
+        window_shift: float,
+        mocker: MockerFixture,
+        source: MouseInputSource,
+        scheduler: EventLoopScheduler):
+    mouse = mocker.patch("bge.logic.mouse")
+
+    # noinspection PyShadowingBuiltins
+    with MouseAxisInput(Axis2D.Y, source, window_size=window_size, window_shift=window_shift) as input:
+        mouse.position = (0.5, 0.0)
+        scheduler.process()
+
+        while timer.return_value <= window_size:
+            timer.return_value += window_shift
+
+            mouse.position = (0.5, 0.0)
+            scheduler.process()
+
+        assert input.value == approx(-1.0)
+
+        mouse.position = (0.5, 1.0)
+
+        steps = int(window_size / window_shift)
+
+        for i in range(0, steps):
+            timer.return_value += window_shift
+
+            mouse.position = (0.5, 1.0)
+            scheduler.process()
+
+            assert input.value == approx((i + 1) / steps * 2.0 - 1.0)
+
+        assert input.value == approx(1.0)

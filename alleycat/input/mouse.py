@@ -177,13 +177,20 @@ class MouseAxisInput(AxisInput):
             self,
             axis: Axis2D,
             source: MouseInputSource,
+            window_size: float = 0,
+            window_shift: float = 0,
             sensitivity: float = 1.0,
             dead_zone: float = 0.0,
             enabled: bool = True) -> None:
         self._axis = not_empty(axis)
         self._source = not_empty(source)
 
-        super().__init__(sensitivity=sensitivity, dead_zone=dead_zone, enabled=enabled)
+        super().__init__(
+            window_size=window_size,
+            window_shift=window_shift,
+            sensitivity=sensitivity,
+            dead_zone=dead_zone,
+            enabled=enabled)
 
         self.logger.debug("Binding to %s axis (sensitivity=%f, dead_zone=%f).", axis.name, sensitivity, dead_zone)
 
@@ -194,6 +201,10 @@ class MouseAxisInput(AxisInput):
     @property
     def source(self) -> MouseInputSource:
         return self._source
+
+    @property
+    def scheduler(self) -> EventLoopScheduler:
+        return self.source.scheduler
 
     def create(self) -> Observable:
         return rv.observe(self.source.position).pipe(
@@ -213,6 +224,8 @@ class MouseAxisInput(AxisInput):
                         {"const": "y"}
                     ]
                 },
+                "window_size": {"type": "number", "minimum": 0, "maximum": 1},
+                "window_shift": {"type": "number", "minimum": 0, "maximum": 1},
                 "sensitivity": {"type": "number", "minimum": 0},
                 "dead_zone": {"type": "number", "minimum": 0, "maximum": 1},
                 "enabled": {"type": "boolean"}
@@ -232,8 +245,13 @@ class MouseAxisInput(AxisInput):
         json(config, cls.config_schema())
 
         enabled = "enabled" not in config or config["enabled"]
+
         axis = getattr(Axis2D, str(config["axis"]).upper())
+
+        window_size = config.get("window_size", 0)
+        window_shift = config.get("window_shift", 0)
+
         sensitivity = config.get("sensitivity", 1.0)
         dead_zone = config.get("dead_zone", 0.0)
 
-        return MouseAxisInput(axis, source, sensitivity, dead_zone, enabled)
+        return MouseAxisInput(axis, source, window_size, window_shift, sensitivity, dead_zone, enabled)

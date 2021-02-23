@@ -232,7 +232,7 @@ def test_input_interpolation(
 
         scheduler.process()
 
-        while timer.return_value < window_size:
+        while timer.return_value <= window_size:
             timer.return_value += window_shift
             scheduler.process()
 
