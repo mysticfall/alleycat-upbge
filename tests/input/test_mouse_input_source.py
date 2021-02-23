@@ -176,25 +176,6 @@ def test_position(mocker: MockerFixture, source: MouseInputSource, scheduler: Ev
         assert positions == [(0.5, 0.5), (0.7, 0.2)]
 
 
-def test_on_wheel_move(mocker: MockerFixture, source: MouseInputSource, scheduler: EventLoopScheduler):
-    mouse = mocker.patch("bge.logic.mouse")
-
-    scroll = []
-
-    with source.on_wheel_move.subscribe(scroll.append):
-        assert scroll == []
-
-        mouse.activeInputs = {WHEELUPMOUSE: create_event(InputState.Active, values=(0, 1))}
-        scheduler.process()
-
-        assert scroll == [1]
-
-        mouse.activeInputs = {WHEELDOWNMOUSE: create_event(InputState.Active, values=(0, -1))}
-        scheduler.process()
-
-        assert scroll == [1, -1]
-
-
 def test_show_mouse(mocker: MockerFixture, source: MouseInputSource):
     method = mocker.spy(bge.render, "showMouse")
 

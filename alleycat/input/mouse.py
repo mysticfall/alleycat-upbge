@@ -63,16 +63,6 @@ class MouseInputSource(EventLoopAware, LoggingSupport):
 
         rv.observe(self.show_pointer).subscribe(lambda v: bge.render.showMouse(v), on_error=self.error_handler)
 
-    @property
-    def on_wheel_move(self) -> Observable:
-        def on_wheel(code: int) -> Observable:
-            return self._activeInputs.pipe(
-                ops.filter(lambda i: code in i),
-                ops.map(lambda i: i[code].values[-1]),
-                ops.filter(lambda v: v != 0))
-
-        return rx.merge(on_wheel(bge.events.WHEELUPMOUSE), on_wheel(bge.events.WHEELDOWNMOUSE))
-
     def on_button_press(self, button: MouseButton) -> Observable:
         return rv.observe(self.buttons).pipe(
             ops.map(lambda b: button in b),
