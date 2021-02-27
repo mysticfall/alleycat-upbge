@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 from queue import PriorityQueue
 from time import mktime
-from typing import Optional
+from typing import Final, Optional
 
 import bge
 from rx import Observable
@@ -14,7 +14,7 @@ from rx.subject import Subject
 
 from alleycat.log import LoggingSupport
 
-DELTA_ZERO = timedelta(0)
+DELTA_ZERO: Final = timedelta(0)
 
 
 class TimeMode(Enum):
