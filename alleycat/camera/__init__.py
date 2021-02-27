@@ -1,2 +1,2 @@
-from .camera import CameraControl
+from .control import CameraControl
 from .thirdperson import ThirdPersonCamera
