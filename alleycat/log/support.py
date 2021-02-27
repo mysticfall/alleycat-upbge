@@ -2,7 +2,7 @@ from functools import cached_property, partial
 from logging import Logger, getLogger
 
 from alleycat import log
-from alleycat.common import ErrorHandler, ErrorHandlerSupport
+from alleycat.log import ErrorHandler, ErrorHandlerSupport
 
 
 class LoggingSupport(ErrorHandlerSupport):

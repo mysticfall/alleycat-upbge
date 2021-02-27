@@ -4,8 +4,8 @@ from alleycat.reactive import ReactiveObject
 from rx import operators as ops
 from validator_collection import not_empty
 
-from alleycat.common import ErrorHandlerSupport
 from alleycat.event import EventLoopScheduler
+from alleycat.log import ErrorHandlerSupport
 
 
 class EventLoopAware(ErrorHandlerSupport, ReactiveObject):
