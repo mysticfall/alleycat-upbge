@@ -49,6 +49,15 @@
             "sensitivity": 1
           }
         }
+      },
+      "zoom": {
+        "type": "axis",
+        "name": "Zoom",
+        "description": "Zoom camera view.",
+        "input": {
+          "type": "mouse_wheel",
+          "sensitivity": 5
+        }
       }
     }
   },

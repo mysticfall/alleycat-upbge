@@ -1,6 +1,7 @@
 from collections import OrderedDict
 
 import bge
+from alleycat.reactive import functions as rv
 from bge.types import KX_GameObject, KX_Scene
 from bpy.types import Object
 from dependency_injector.wiring import Provide, inject
@@ -34,6 +35,13 @@ class ThirdPersonCamera(CameraControl):
         self.logger.info("Pivot object: %s", self.pivot)
 
         self.distance = 1.0
+
+        def zoom(value: float):
+            self.distance = min(max(self.distance - value * 0.07, 0), 10)
+
+        zoom_input = input_map["view"]["zoom"]
+
+        rv.observe(zoom_input.value).subscribe(zoom, on_error=self.error_handler)
 
     def update(self) -> None:
         up_axis = self.pivot.worldOrientation @ Vector((0, 0, 1))
