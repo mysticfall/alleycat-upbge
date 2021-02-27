@@ -11,9 +11,7 @@ from alleycat.input import MouseButton, MouseButtonInput, MouseInputSource
 from tests.input import InputState, create_event
 
 LEFTMOUSE: Final = 116
-
 MIDDLEMOUSE: Final = 117
-
 RIGHTMOUSE: Final = 118
 
 KX_INPUT_NONE: Final = 0
