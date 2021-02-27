@@ -155,7 +155,14 @@ def test_input(
             return
 
         def get_value():
-            base = 1 if WHEELUPMOUSE in mouse.activeInputs else -1 if WHEELDOWNMOUSE in mouse.activeInputs else 0
+            base = 0
+
+            if WHEELUPMOUSE in mouse.activeInputs:
+                base += mouse.activeInputs[WHEELUPMOUSE].values[-1]
+
+            if WHEELDOWNMOUSE in mouse.activeInputs:
+                base += mouse.activeInputs[WHEELDOWNMOUSE].values[-1]
+
             value = min(max(-1.0, base * sensitivity), 1.0)
 
             if abs(value) < dead_zone:
@@ -190,7 +197,7 @@ def test_input_interpolation(
         while timer.return_value <= window_size:
             timer.return_value += window_shift
 
-            mouse.activeInputs = {WHEELDOWNMOUSE: create_event(InputState.JustActivated, (0, 1))}
+            mouse.activeInputs = {WHEELDOWNMOUSE: create_event(InputState.JustActivated, (0, -1))}
             scheduler.process()
 
         assert input.value == approx(-1.0)

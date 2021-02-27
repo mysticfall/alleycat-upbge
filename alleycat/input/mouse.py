@@ -285,7 +285,7 @@ class MouseWheelInput(AxisInput):
             if bge.events.WHEELUPMOUSE in events:
                 return events[bge.events.WHEELUPMOUSE].values[-1]
             if bge.events.WHEELDOWNMOUSE in events:
-                return events[bge.events.WHEELDOWNMOUSE].values[-1] * -1
+                return events[bge.events.WHEELDOWNMOUSE].values[-1]
 
             return 0
 
