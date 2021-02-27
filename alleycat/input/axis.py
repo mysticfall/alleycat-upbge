@@ -92,6 +92,73 @@ class AxisInput(Input[float], ABC):
         return tuple(chain(super().modifiers, axis_modifiers))
 
 
+class AxisBinding(InputBinding[AxisInput]):
+    input: RP[Maybe[AxisInput]] = rv.new_property().pipe(
+        lambda b: (ops.do_action(lambda i: b.logger.debug("Set axis input to %s.", i)),))
+
+    # noinspection PyTypeChecker,PyShadowingBuiltins
+    value: RV[float] = input.as_view().pipe(lambda b: (
+        ops.map(lambda i: i.map(lambda v: v.observe("value")).value_or(rx.return_value(0))),
+        ops.switch_latest(),
+        ops.start_with(0),
+        ops.do_action(b.log_value),))
+
+    # noinspection PyShadowingBuiltins
+    def __init__(
+            self,
+            name: str,
+            description: Optional[str] = None,
+            input: Optional[AxisInput] = None) -> None:
+
+        super().__init__(name, description)
+
+        # noinspection PyTypeChecker
+        self.input = Maybe.from_optional(input)
+
+    @classmethod
+    def config_schema(cls) -> object:
+        return {
+            "$schema": ConfigMetaSchema,
+            "type": "object",
+            "properties": {
+                "type": {"const": "axis"},
+                "name": {"type": "string"},
+                "description": {"type": "string"},
+                "input": {
+                    "type": "object"
+                }
+            },
+            "required": ["name", "type"]
+        }
+
+    @classmethod
+    def from_config(cls, input_factory: providers.Provider[Input], config: Mapping[str, Any]) -> AxisBinding:
+        not_empty(input_factory)
+
+        logger = log.get_logger(cls)
+
+        logger.debug("Creating an axis binding from config: %s.", config)
+
+        json(config, cls.config_schema())
+
+        name = config["name"]
+        description = config["description"] if "description" in config else None
+
+        if "input" in config:
+            input_conf = config["input"]
+
+            def bind_input() -> Optional[AxisInput]:
+                if "type" in input_conf:
+                    # noinspection PyShadowingBuiltins,PyTypeChecker
+                    return input_factory(input_conf["type"], input_conf)
+                else:
+                    return None
+
+            return AxisBinding(name, description, input=bind_input())
+
+        return AxisBinding(name, description)
+
+
 class Axis2DBinding(InputBinding[AxisInput]):
     x_input: RP[Maybe[AxisInput]] = rv.new_property().pipe(
         lambda b: (ops.do_action(lambda i: b.logger.debug("Set X axis input to %s.", i)),))
