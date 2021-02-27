@@ -169,8 +169,7 @@ class KeyAxisInput(AxisInput):
             dead_zone=dead_zone,
             enabled=enabled)
 
-        self.logger.debug("Creating axis with keys %s(+) and %s(-) (sensitivity=%f, dead_zone=%f).",
-                          positive_key, negative_key, sensitivity, dead_zone)
+        self.logger.debug("Creating axis with keys %s(+) and %s(-).", positive_key, negative_key)
 
     @property
     def positive_key(self) -> int:

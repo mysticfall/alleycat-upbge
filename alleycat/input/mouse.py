@@ -182,7 +182,7 @@ class MouseAxisInput(AxisInput):
             dead_zone=dead_zone,
             enabled=enabled)
 
-        self.logger.debug("Binding to %s axis (sensitivity=%f, dead_zone=%f).", axis.name, sensitivity, dead_zone)
+        self.logger.debug("Binding to axis '%s'.", axis.name)
 
     @property
     def axis(self) -> Axis2D:

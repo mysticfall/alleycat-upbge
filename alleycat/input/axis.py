@@ -42,6 +42,9 @@ class AxisInput(Input[float], ABC):
         self._sensitivity = numeric(sensitivity, minimum=0)
         self._dead_zone = numeric(dead_zone, minimum=0, maximum=1)
 
+        self.logger.debug("Axis parameters: sensitivity=%f, dead_zone=%f.", sensitivity, dead_zone)
+        self.logger.debug("Smoothing parameters: window_size=%f, window_shift=%f.", window_size, window_shift)
+
         super().__init__(init_value=validators.float(init_value), enabled=enabled)
 
     @property
