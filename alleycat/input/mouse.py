@@ -63,6 +63,10 @@ class MouseInputSource(EventLoopAware, LoggingSupport):
 
         rv.observe(self.show_pointer).subscribe(lambda v: bge.render.showMouse(v), on_error=self.error_handler)
 
+    @property
+    def on_input_change(self) -> Observable:
+        return self._activeInputs
+
     def on_button_press(self, button: MouseButton) -> Observable:
         return rv.observe(self.buttons).pipe(
             ops.map(lambda b: button in b),
@@ -245,3 +249,87 @@ class MouseAxisInput(AxisInput):
         dead_zone = config.get("dead_zone", 0.0)
 
         return MouseAxisInput(axis, source, window_size, window_shift, sensitivity, dead_zone, enabled)
+
+
+class MouseWheelInput(AxisInput):
+
+    def __init__(
+            self,
+            source: MouseInputSource,
+            window_size: float = 0.1,
+            window_shift: float = 0.01,
+            sensitivity: float = 1.0,
+            dead_zone: float = 0.0,
+            enabled: bool = True) -> None:
+        self._source = not_empty(source)
+
+        super().__init__(
+            window_size=window_size,
+            window_shift=window_shift,
+            sensitivity=sensitivity,
+            dead_zone=dead_zone,
+            enabled=enabled)
+
+        self.logger.debug("Initialising mouse wheel input(sensitivity=%f, dead_zone=%f).", sensitivity, dead_zone)
+
+    @property
+    def source(self) -> MouseInputSource:
+        return self._source
+
+    @property
+    def scheduler(self) -> EventLoopScheduler:
+        return self.source.scheduler
+
+    def create(self) -> Observable:
+        def get_value(events):
+            if bge.events.WHEELUPMOUSE in events:
+                return events[bge.events.WHEELUPMOUSE].values[-1]
+            if bge.events.WHEELDOWNMOUSE in events:
+                return events[bge.events.WHEELDOWNMOUSE].values[-1] * -1
+
+            return 0
+
+        return self.source.on_input_change.pipe(ops.map(get_value))
+
+    @classmethod
+    def config_schema(cls) -> object:
+        return {
+            "$schema": ConfigMetaSchema,
+            "type": "object",
+            "properties": {
+                "type": {"const": "mouse_wheel"},
+                "window_size": {"type": "number", "minimum": 0, "maximum": 1},
+                "window_shift": {"type": "number", "minimum": 0, "maximum": 1},
+                "sensitivity": {"type": "number", "minimum": 0},
+                "dead_zone": {"type": "number", "minimum": 0, "maximum": 1},
+                "enabled": {"type": "boolean"}
+            },
+            "required": ["type"]
+        }
+
+    @classmethod
+    def from_config(cls, source: MouseInputSource, config: Mapping[str, Any]) -> MouseWheelInput:
+        not_empty(source)
+        not_empty(config)
+
+        logger = log.get_logger(cls)
+
+        logger.debug("Creating a mouse axis input from config: %s", config)
+
+        json(config, cls.config_schema())
+
+        enabled = "enabled" not in config or config["enabled"]
+
+        window_size = config.get("window_size", 0.1)
+        window_shift = config.get("window_shift", 0.01)
+
+        sensitivity = config.get("sensitivity", 1.0)
+        dead_zone = config.get("dead_zone", 0.0)
+
+        return MouseWheelInput(
+            source,
+            window_size=window_size,
+            window_shift=window_shift,
+            sensitivity=sensitivity,
+            dead_zone=dead_zone,
+            enabled=enabled)

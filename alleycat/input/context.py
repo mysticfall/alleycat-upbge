@@ -4,7 +4,7 @@ from dependency_injector.providers import Configuration, Dependency, Factory, Fa
 
 from alleycat.event import EventLoopScheduler
 from alleycat.input import Axis2DBinding, Input, InputBinding, InputMap, KeyAxisInput, KeyInputSource, KeyPressInput, \
-    MouseAxisInput, MouseButtonInput, MouseInputSource, TriggerBinding
+    MouseAxisInput, MouseButtonInput, MouseInputSource, MouseWheelInput, TriggerBinding
 
 
 class InputContext(DeclarativeContainer):
@@ -24,6 +24,7 @@ class InputContext(DeclarativeContainer):
         key_press=Factory(KeyPressInput.from_config, keyboard),
         key_axis=Factory(KeyAxisInput.from_config, keyboard),
         mouse_button=Factory(MouseButtonInput.from_config, mouse),
-        mouse_axis=Factory(MouseAxisInput.from_config, mouse))
+        mouse_axis=Factory(MouseAxisInput.from_config, mouse),
+        mouse_wheel=Factory(MouseWheelInput.from_config, mouse))
 
     mappings: providers.Provider[InputMap] = Singleton(InputMap.from_config, binding_factory, input_factory, config)
