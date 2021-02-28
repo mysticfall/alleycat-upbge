@@ -2,15 +2,23 @@ from __future__ import annotations
 
 from typing import Mapping
 
+from alleycat.reactive import RP, RV, functions as rv
 from dependency_injector import providers
 from dependency_injector.providers import Factory, FactoryAggregate
 from pytest import fixture
 from returns.maybe import Nothing, Some
+from rx import Observable
 
 from alleycat.input import Input, InputBinding, InputMap
 
 
 class TestBinding(InputBinding[float]):
+    current: RP[float] = rv.from_value(0.0)
+
+    value: RV[float] = current.as_view()
+
+    def __init__(self, name: str):
+        super().__init__(name)
 
     # noinspection PyMethodMayBeStatic
     def from_config(self, conf: dict):
@@ -86,3 +94,32 @@ def test_find_binding(
     assert mapping.find_binding("quit").map(lambda b: b.name) == Some("Exit Game")
     assert mapping.find_binding(("general", "menu")).map(lambda b: b.name) == Some("Show Menu")
     assert mapping.find_binding(("view", "zoom")).map(lambda b: b.name) == Nothing
+
+
+def test_observe(
+        config: Mapping,
+        binding_factory: providers.Provider[InputBinding],
+        input_factory: providers.Provider[Input]):
+    mapping = InputMap.from_config(binding_factory, input_factory, config)
+
+    binding: TestBinding = mapping["view"]["rotate"]
+
+    assert binding
+
+    value = mapping.observe(("view", "rotate")).unwrap()
+
+    assert isinstance(value, Observable)
+
+    values = []
+    value.subscribe(values.append)
+
+    assert values == [0.0]
+
+    binding.current = 0.5
+
+    assert values == [0.0, 0.5]
+
+    error = mapping.observe(("view", "zoom")).swap().unwrap()
+
+    assert isinstance(error, ValueError)
+    assert str(error) == "Unknown input path: 'view/zoom'."

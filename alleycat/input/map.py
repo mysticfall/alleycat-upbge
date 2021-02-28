@@ -2,8 +2,15 @@ from __future__ import annotations
 
 from typing import Any, Mapping, Sequence, Union
 
+from alleycat.reactive import functions as rv
 from dependency_injector import providers
+from returns.converters import maybe_to_result
 from returns.maybe import Maybe, Nothing, Some
+from returns.methods import cond
+from returns.pipeline import flow
+from returns.pointfree import alt, map_
+from returns.result import ResultE
+from rx import Observable
 from validator_collection.validators import not_empty
 
 from alleycat import log
@@ -29,7 +36,15 @@ class InputMap(Lookup[Any], LoggingSupport):
         else:
             segments = path
 
-        return self._resolve(segments, self).bind(lambda i: Some(i) if isinstance(i, InputBinding) else Nothing)
+        return self._resolve(segments, self).bind(lambda i: cond(Maybe, isinstance(i, InputBinding), i))
+
+    def observe(self, path: Union[str, Sequence[str]]) -> ResultE[Observable]:
+        return flow(
+            not_empty(path),
+            self.find_binding,
+            map_(lambda i: rv.observe(i.value)),  # type:ignore
+            maybe_to_result,
+            alt(lambda _: ValueError(f"Unknown input path: '{'/'.join(path)}'.")))  # type:ignore
 
     def _resolve(self, path: Sequence[str], lookup: Any) -> Maybe[Any]:
         if not isinstance(lookup, Lookup):
