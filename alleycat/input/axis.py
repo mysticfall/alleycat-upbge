@@ -92,7 +92,7 @@ class AxisInput(Input[float], ABC):
         return tuple(chain(super().modifiers, axis_modifiers))
 
 
-class AxisBinding(InputBinding[AxisInput]):
+class AxisBinding(InputBinding[float]):
     input: RP[Maybe[AxisInput]] = rv.new_property().pipe(
         lambda b: (ops.do_action(lambda i: b.logger.debug("Set axis input to %s.", i)),))
 
@@ -159,7 +159,7 @@ class AxisBinding(InputBinding[AxisInput]):
         return AxisBinding(name, description)
 
 
-class Axis2DBinding(InputBinding[AxisInput]):
+class Axis2DBinding(InputBinding[Vector]):
     x_input: RP[Maybe[AxisInput]] = rv.new_property().pipe(
         lambda b: (ops.do_action(lambda i: b.logger.debug("Set X axis input to %s.", i)),))
 

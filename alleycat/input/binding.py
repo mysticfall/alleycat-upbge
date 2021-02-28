@@ -2,17 +2,17 @@ import logging
 from abc import ABC
 from typing import Generic, Optional, TypeVar
 
-from alleycat.reactive import ReactiveObject
+from alleycat.reactive import RV, ReactiveObject
 from returns.maybe import Maybe
 from validator_collection.validators import not_empty
 
-from alleycat.input import Input
 from alleycat.log import LoggingSupport
 
-T = TypeVar("T", bound=Input)
+T = TypeVar("T")
 
 
 class InputBinding(Generic[T], LoggingSupport, ReactiveObject, ABC):
+    value: RV[T]
 
     def __init__(self, name: str, description: Optional[str] = None) -> None:
         self._name = not_empty(name)
