@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Mapping, Sequence, Union
 
 from dependency_injector import providers
-from returns.maybe import Maybe, Nothing
+from returns.maybe import Maybe, Nothing, Some
 from validator_collection.validators import not_empty
 
 from alleycat import log
@@ -20,16 +20,22 @@ class InputMap(Lookup[Any], LoggingSupport):
         self.logger.info("Created an input map with %d categories: %s.", len(values), ", ".join(values.keys()))
 
     def find_binding(self, path: Union[str, Sequence[str]]) -> Maybe[InputBinding]:
-        if isinstance(not_empty(path), str):
-            return self._resolve((path,))
+        not_empty(path)
 
-        return self._resolve(path)
+        segments: Sequence[str]
 
-    def _resolve(self, path: Sequence[str]) -> Maybe[InputBinding]:
-        if len(path) == 0:
+        if isinstance(path, str):
+            segments = (path,)
+        else:
+            segments = path
+
+        return self._resolve(segments, self).bind(lambda i: Some(i) if isinstance(i, InputBinding) else Nothing)
+
+    def _resolve(self, path: Sequence[str], lookup: Any) -> Maybe[Any]:
+        if not isinstance(lookup, Lookup):
             return Nothing
 
-        return self.find(path[0]).bind(lambda i: i if isinstance(i, InputBinding) else self._resolve(path[1:]))
+        return lookup.find(path[0]).bind(lambda i: Some(i) if len(path) == 1 else self._resolve(path[1:], i))
 
     @classmethod
     def from_config(cls,
@@ -44,7 +50,7 @@ class InputMap(Lookup[Any], LoggingSupport):
 
         logger.debug("Creating an input map from config: %s.", config)
 
-        def create_lookup(configs) -> Lookup:
+        def create_lookup(configs, factory=Lookup) -> Lookup:
             items = dict()
 
             for k in configs:
@@ -66,15 +72,6 @@ class InputMap(Lookup[Any], LoggingSupport):
 
             logger.debug("Configured %d lookup entries: %s.", len(items), ", ".join(items.keys()))
 
-            return Lookup(items)
+            return factory(items)
 
-        lookups = dict()
-
-        for key in config:
-            logger.debug("Found input category '%s'.", key)
-
-            lookup = create_lookup(config[key])
-
-            lookups[key] = lookup
-
-        return InputMap(lookups)
+        return create_lookup(config, InputMap)
