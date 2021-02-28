@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Mapping
+
 from dependency_injector import providers
 from dependency_injector.providers import Factory, FactoryAggregate
 from pytest import fixture
@@ -24,13 +26,21 @@ def binding_factory() -> providers.Provider[InputBinding]:
     return FactoryAggregate(test=Factory(TestBinding.from_config), )
 
 
-def test_from_config(binding_factory: providers.Provider[InputBinding], input_factory: providers.Provider[Input]):
-    config = {
+@fixture
+def config() -> Mapping:
+    return {
         "general": {
             "menu": {
                 "type": "test",
                 "name": "Exit Game"
-            }
+            },
+            "debug": {
+                "console": {
+                    "type": "test",
+                    "name": "Open Game Console"
+                }
+            },
+            "invalid": "Invalid entry"
         },
         "view": {
             "rotate": {
@@ -44,6 +54,11 @@ def test_from_config(binding_factory: providers.Provider[InputBinding], input_fa
         }
     }
 
+
+def test_from_config(
+        config: Mapping,
+        binding_factory: providers.Provider[InputBinding],
+        input_factory: providers.Provider[Input]):
     mapping = InputMap.from_config(binding_factory, input_factory, config)
 
     assert mapping
@@ -51,5 +66,6 @@ def test_from_config(binding_factory: providers.Provider[InputBinding], input_fa
     assert set(mapping.keys()) == {"general", "view"}
 
     assert mapping["general"]["menu"].name == "Exit Game"
+    assert mapping["general"]["debug"]["console"].name == "Open Game Console"
     assert mapping["view"]["rotate"].name == "Rotate Camera"
     assert mapping["view"]["move"].name == "Move Camera"
