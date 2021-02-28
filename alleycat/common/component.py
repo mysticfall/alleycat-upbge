@@ -1,3 +1,4 @@
+from abc import ABC
 from typing import Generic, TypeVar
 
 from alleycat.reactive import ReactiveObject
@@ -10,7 +11,7 @@ T = TypeVar("T", bound=KX_GameObject)
 U = TypeVar("U", bound=ID)
 
 
-class BaseComponent(Generic[T], LoggingSupport, ReactiveObject, KX_PythonComponent):
+class BaseComponent(Generic[T], LoggingSupport, ReactiveObject, KX_PythonComponent, ABC):
     object: T
 
     # noinspection PyUnusedLocal
@@ -18,5 +19,5 @@ class BaseComponent(Generic[T], LoggingSupport, ReactiveObject, KX_PythonCompone
         super().__init__()
 
 
-class IDComponent(Generic[T, U], BaseComponent[T]):
+class IDComponent(Generic[T, U], BaseComponent[T], ABC):
     blenderObject: U

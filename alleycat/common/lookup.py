@@ -1,3 +1,4 @@
+from abc import ABC
 from typing import Generic, Iterator, Mapping, TypeVar
 
 from returns.maybe import Maybe, Nothing, Some
@@ -6,7 +7,7 @@ from validator_collection import not_empty
 T = TypeVar("T")
 
 
-class Lookup(Generic[T], Mapping[str, T]):
+class Lookup(Generic[T], Mapping[str, T], ABC):
     def __init__(self, values: Mapping[str, T]) -> None:
         not_empty(values, allow_empty=True)
 
