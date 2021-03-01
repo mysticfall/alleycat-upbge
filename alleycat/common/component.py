@@ -3,7 +3,7 @@ from typing import Generic, Type, TypeVar
 
 from alleycat.reactive import ReactiveObject
 from bge.types import KX_GameObject, KX_PythonComponent
-from bpy.types import ID
+from bpy.types import ID, Object
 from returns.curry import curry
 from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, ResultE, Success
@@ -46,6 +46,10 @@ class BaseComponent(Generic[T], LoggingSupport, ReactiveObject, KX_PythonCompone
             return Success(value)
         else:
             return Failure(ValueError(f"Missing component property '{key}'."))
+
+    def as_game_object(self, obj: Object) -> KX_GameObject:
+        # noinspection PyUnresolvedReferences
+        return self.object.scene.getGameObjectFromObject(not_empty(obj))
 
 
 class IDComponent(Generic[T, U], BaseComponent[T], ABC):
