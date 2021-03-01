@@ -7,7 +7,7 @@
         "description": "Toggle the main menu.",
         "input": {
           "type": "key_press",
-          "keycode": "ESCKEY"
+          "key": "ESCKEY"
         }
       }
     },
