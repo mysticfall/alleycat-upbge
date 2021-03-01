@@ -2,7 +2,7 @@ from _pytest.fixtures import fixture
 from returns.maybe import Nothing, Some
 from returns.result import Success
 
-from alleycat.common import BaseComponent
+from alleycat.common import ArgumentReader
 
 
 @fixture
@@ -10,8 +10,8 @@ def args() -> dict:
     return {"a": 1, "b": "B"}
 
 
-def test_read_arg(args: dict):
-    config = BaseComponent.read_arg(args)
+def test_read(args: dict):
+    config = ArgumentReader(args).read
 
     assert config("a", int) == Some(1)
     assert config("b", str) == Some("B")
@@ -20,8 +20,8 @@ def test_read_arg(args: dict):
     assert config("a", str) == Nothing
 
 
-def test_require_arg(args: dict):
-    config = BaseComponent.require_arg(args)
+def test_require(args: dict):
+    config = ArgumentReader(args).require
 
     assert config("a", int) == Success(1)
     assert config("b", str) == Success("B")

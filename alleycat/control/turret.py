@@ -8,7 +8,7 @@ from dependency_injector.wiring import Provide, inject
 from mathutils import Euler, Vector
 from rx import operators as ops
 
-from alleycat.common import BaseComponent
+from alleycat.common import ArgumentReader, BaseComponent
 from alleycat.game import GameContext
 from alleycat.input import InputMap
 
@@ -35,13 +35,15 @@ class TurretControl(BaseComponent, ABC):
             self,
             args: dict,
             input_map: InputMap = Provide[GameContext.input.mappings]) -> None:
-        sensitivity = self.read_arg(args, self.ArgKeys.ROTATION_SENSITIVITY, float).value_or(1.0)
+        props = ArgumentReader(args)
+
+        sensitivity = props.read(self.ArgKeys.ROTATION_SENSITIVITY, float).value_or(1.0)
 
         def rotate(value: Vector):
             self.pitch += value.y * sensitivity
             self.yaw += value.x * sensitivity
 
-        self.require_arg(args, self.ArgKeys.ROTATION_INPUT, str) \
+        props.require(self.ArgKeys.ROTATION_INPUT, str) \
             .map(lambda s: s.split("/")) \
             .bind(input_map.observe) \
             .map(lambda o: o.subscribe(rotate, on_error=self.error_handler)) \
