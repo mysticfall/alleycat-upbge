@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Tuple
 from unittest.mock import patch
 
 from alleycat.reactive import RP, functions as rv
@@ -14,11 +12,7 @@ from validator_collection.errors import JSONValidationError
 
 from alleycat.event import EventLoopScheduler
 from alleycat.input import Axis2DBinding, AxisInput, Input
-
-
-@dataclass(frozen=True)
-class TestVector:
-    values: Tuple[float, float]
+from tests import MockVector
 
 
 class TestAxisInput(AxisInput):
@@ -110,7 +104,7 @@ def test_from_config_wrong_type(input_factory: providers.Provider[Input]):
     assert e.value.args[0] == "'axis2d' was expected"
 
 
-@patch("mathutils.Vector", TestVector)
+@patch("mathutils.Vector", MockVector)
 def test_value():
     x = TestAxisInput()
     y = TestAxisInput()
@@ -121,23 +115,23 @@ def test_value():
 
     rv.observe(binding.value).subscribe(values.append)
 
-    assert binding.value == TestVector((0.0, 0.0))
-    assert values == [TestVector((0.0, 0.0))]
+    assert binding.value == MockVector((0.0, 0.0))
+    assert values == [MockVector((0.0, 0.0))]
 
     x.test_value = 0.3
 
-    assert binding.value == TestVector((0.3, 0.0))
+    assert binding.value == MockVector((0.3, 0.0))
     assert len(values) == 2
-    assert values[-1] == TestVector((0.3, 0.0))
+    assert values[-1] == MockVector((0.3, 0.0))
 
     y.test_value = 0.6
 
-    assert binding.value == TestVector((0.3, 0.6))
+    assert binding.value == MockVector((0.3, 0.6))
     assert len(values) == 3
-    assert values[-1] == TestVector((0.3, 0.6))
+    assert values[-1] == MockVector((0.3, 0.6))
 
 
-@patch("mathutils.Vector", TestVector)
+@patch("mathutils.Vector", MockVector)
 def test_switch_input():
     x1 = TestAxisInput()
     y1 = TestAxisInput()
@@ -147,7 +141,7 @@ def test_switch_input():
 
     binding = Axis2DBinding("test", x_input=x1, y_input=y1)
 
-    assert binding.value == TestVector((0.1, 0.8))
+    assert binding.value == MockVector((0.1, 0.8))
 
     x2 = TestAxisInput()
     y2 = TestAxisInput()
@@ -158,14 +152,14 @@ def test_switch_input():
     binding.x_input = Some(x2)
     binding.y_input = Some(y2)
 
-    assert binding.value == TestVector((0.3, 0.4))
+    assert binding.value == MockVector((0.3, 0.4))
 
 
-@patch("mathutils.Vector", TestVector)
+@patch("mathutils.Vector", MockVector)
 def test_lazy_bound_input():
     binding = Axis2DBinding("test")
 
-    assert binding.value == TestVector((0.0, 0.0))
+    assert binding.value == MockVector((0.0, 0.0))
 
     x = TestAxisInput()
     y = TestAxisInput()
@@ -176,4 +170,4 @@ def test_lazy_bound_input():
     binding.x_input = Some(x)
     binding.y_input = Some(y)
 
-    assert binding.value == TestVector((0.7, 0.6))
+    assert binding.value == MockVector((0.7, 0.6))
