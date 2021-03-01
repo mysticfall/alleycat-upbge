@@ -5,6 +5,7 @@ from alleycat.reactive import ReactiveObject
 from bge.types import KX_GameObject, KX_PythonComponent
 from bpy.types import ID
 from returns.curry import curry
+from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, ResultE, Success
 from validator_collection import not_empty
 
@@ -24,7 +25,18 @@ class BaseComponent(Generic[T], LoggingSupport, ReactiveObject, KX_PythonCompone
 
     @staticmethod
     @curry
-    def read_arg(args: dict, key: str, tpe: Type[V]) -> ResultE[V]:
+    def read_arg(args: dict, key: str, tpe: Type[V]) -> Maybe[V]:
+        if not_empty(key) in not_empty(args):
+            value = args[key]
+
+            if isinstance(value, not_empty(tpe)):
+                return Some(value)
+
+        return Nothing
+
+    @staticmethod
+    @curry
+    def require_arg(args: dict, key: str, tpe: Type[V]) -> ResultE[V]:
         if not_empty(key) in not_empty(args):
             value = args[key]
 
