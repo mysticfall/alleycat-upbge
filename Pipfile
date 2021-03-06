@@ -8,7 +8,7 @@ verify_ssl = true
 "pipenv-setup" = "*"
 "pytest" = "*"
 "pytest-mock" = "*"
-"fake-bpy-module-2.91" = "*"
+"fake-bpy-module-2.92" = "*"
 "fake-bge-module-0.2.5" = "*"
 
 [packages]
