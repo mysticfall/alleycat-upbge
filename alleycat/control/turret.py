@@ -11,6 +11,7 @@ from rx import operators as ops
 from alleycat.common import ArgumentReader, BaseComponent
 from alleycat.game import GameContext
 from alleycat.input import InputMap
+from alleycat.math import clamp, normalize_angle
 
 
 class TurretControl(BaseComponent, ABC):
@@ -23,9 +24,9 @@ class TurretControl(BaseComponent, ABC):
         (ArgKeys.ROTATION_SENSITIVITY, 1.0)
     ))
 
-    pitch: RP[float] = rv.from_value(0.0).map(lambda _, v: min(max(v, -math.pi), math.pi))
+    pitch: RP[float] = rv.from_value(0.0).validate(lambda _, v: clamp(v, -math.pi / 2, math.pi / 2))
 
-    yaw: RP[float] = rv.from_value(0.0).map(lambda _, v: min(max(v, -math.pi), math.pi))
+    yaw: RP[float] = rv.from_value(0.0).validate(lambda _, v: normalize_angle(v))
 
     # noinspection PyArgumentList
     rotation: RV[Euler] = rv.combine_latest(pitch, yaw)(ops.map(lambda v: Euler((v[0], 0, -v[1]), "XYZ")))
