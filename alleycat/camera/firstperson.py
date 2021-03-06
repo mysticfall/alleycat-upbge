@@ -36,10 +36,10 @@ class FirstPersonCamera(TurretControl[KX_Camera], CameraControl):
 
         self.logger.debug("args['%s'] = %s", self.ArgKeys.PIVOT, pivot)
 
-        def init(p: KX_GameObject):
+        def setup(p: KX_GameObject):
             self.callbacks.append(partial(self.process, p))
 
-        pivot.map(init).alt(self.logger.warning)
+        pivot.map(setup).alt(self.logger.warning)
 
     def process(self, pivot: KX_GameObject) -> None:
         assert pivot

@@ -38,19 +38,19 @@ class TurretControl(Generic[T], ActivatableComponent[T], ABC):
         super().__init__(obj)
 
     @inject
-    def start(
-            self,
-            args: dict,
-            input_map: InputMap = Provide[GameContext.input.mappings]) -> None:
+    def start(self, args: dict, input_map: InputMap = Provide[GameContext.input.mappings]) -> None:
         super().start(args)
 
         props = ArgumentReader(args)
 
-        # noinspection PyShadowingBuiltins
-        input = props.require(self.ArgKeys.ROTATION_INPUT, str)
+        input_key = props.require(self.ArgKeys.ROTATION_INPUT, str)
+
+        # noinspection PyTypeChecker
+        input_events = input_key.map(lambda s: s.split("/")).bind(input_map.observe)
+
         sensitivity = props.read(self.ArgKeys.ROTATION_SENSITIVITY, float).value_or(1.0)
 
-        self.logger.debug("args['%s'] = %s", self.ArgKeys.ROTATION_INPUT, input)
+        self.logger.debug("args['%s'] = %s", self.ArgKeys.ROTATION_INPUT, input_key)
         self.logger.debug("args['%s'] = %s", self.ArgKeys.ROTATION_SENSITIVITY, self.active)
 
         def rotate(value: Vector):
@@ -64,8 +64,4 @@ class TurretControl(Generic[T], ActivatableComponent[T], ABC):
             ).subscribe(rotate, on_error=self.error_handler)
 
         # noinspection PyTypeChecker
-        props.require(self.ArgKeys.ROTATION_INPUT, str) \
-            .map(lambda s: s.split("/")) \
-            .bind(input_map.observe) \
-            .map(wire) \
-            .alt(self.logger.warning)
+        input_events.map(wire).alt(self.logger.warning)

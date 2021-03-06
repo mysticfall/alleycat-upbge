@@ -36,6 +36,7 @@ class ThirdPersonCamera(TurretControl[KX_Camera], CameraControl):
     def __init__(self, obj: KX_Camera) -> None:
         super().__init__(obj=obj)
 
+    # noinspection PyUnusedLocal
     @inject
     def start(self, args: dict, input_map: InputMap = Provide[GameContext.input.mappings]) -> None:
         super().start(args)
