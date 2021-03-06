@@ -1,3 +1,4 @@
+from .math import clamp, normalize_angle, normalize_euler
 from .lookup import Lookup
 from .arguments import ArgumentReader
 from .component import BaseComponent, IDComponent

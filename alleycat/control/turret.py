@@ -9,10 +9,9 @@ from dependency_injector.wiring import Provide, inject
 from mathutils import Euler, Vector
 from rx import operators as ops
 
-from alleycat.common import ActivatableComponent, ArgumentReader
+from alleycat.common import ActivatableComponent, ArgumentReader, clamp, normalize_angle
 from alleycat.game import GameContext
 from alleycat.input import InputMap
-from alleycat.math import clamp, normalize_angle
 
 
 class TurretControl(ActivatableComponent, ABC):

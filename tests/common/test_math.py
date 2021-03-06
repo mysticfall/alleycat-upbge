@@ -2,7 +2,7 @@ from math import radians
 
 from pytest import approx, mark, raises
 
-from alleycat.math import clamp, normalize_angle, normalize_euler
+from alleycat.common import clamp, normalize_angle, normalize_euler
 
 fixture = [
     (0, 0), (90, 90), (180, 180), (270, -90), (-0, 0), (-90, -90), (-180, 180), (-270, 90), (450, 90), (-450, -90)]
