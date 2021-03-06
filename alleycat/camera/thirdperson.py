@@ -49,6 +49,11 @@ class ThirdPersonCamera(TurretControl, CameraControl):
         sensitivity = props.read(self.ArgKeys.ZOOM_SENSITIVITY, float).value_or(1.0)
         viewpoint = props.read(self.ArgKeys.VIEWPOINT, Object).map(self.as_game_object)
 
+        self.logger.debug("args['%s'] = %s", self.ArgKeys.ZOOM_INPUT, input)
+        self.logger.debug("args['%s'] = %s", self.ArgKeys.PIVOT, pivot)
+        self.logger.debug("args['%s'] = %s", self.ArgKeys.ZOOM_SENSITIVITY, sensitivity)
+        self.logger.debug("args['%s'] = %s", self.ArgKeys.VIEWPOINT, viewpoint)
+
         def zoom(value: float):
             self.distance = max(self.distance - value * 0.1 * sensitivity, 0)
 

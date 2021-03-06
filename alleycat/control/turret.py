@@ -41,7 +41,12 @@ class TurretControl(ActivatableComponent, ABC):
 
         props = ArgumentReader(args)
 
+        # noinspection PyShadowingBuiltins
+        input = props.require(self.ArgKeys.ROTATION_INPUT, str)
         sensitivity = props.read(self.ArgKeys.ROTATION_SENSITIVITY, float).value_or(1.0)
+
+        self.logger.debug("args['%s'] = %s", self.ArgKeys.ROTATION_INPUT, input)
+        self.logger.debug("args['%s'] = %s", self.ArgKeys.ROTATION_SENSITIVITY, self.active)
 
         def rotate(value: Vector):
             self.pitch += value.y * sensitivity
