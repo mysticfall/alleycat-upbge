@@ -44,6 +44,7 @@ class TurretControl(BaseComponent, ABC):
             self.pitch += value.y * sensitivity
             self.yaw += value.x * sensitivity
 
+        # noinspection PyTypeChecker
         props.require(self.ArgKeys.ROTATION_INPUT, str) \
             .map(lambda s: s.split("/")) \
             .bind(input_map.observe) \

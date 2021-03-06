@@ -66,14 +66,20 @@ class ThirdPersonCamera(TurretControl, CameraControl):
         assert pivot
         assert viewpoint
 
+        # noinspection PyUnresolvedReferences
         up_axis = pivot.worldOrientation @ Vector((0, 0, 1))
 
         height = distance_point_to_plane(viewpoint.worldPosition, pivot.worldPosition, up_axis)
 
         mat = self.rotation.to_matrix()
 
+        # noinspection PyUnresolvedReferences
         orientation = pivot.worldOrientation @ mat @ self.base_rotation
+
+        # noinspection PyUnresolvedReferences
         offset = pivot.worldOrientation @ mat @ Vector((0, -1, 0)) * self.distance
 
         self.object.worldOrientation = orientation
+
+        # noinspection PyUnresolvedReferences
         self.object.worldPosition = pivot.worldPosition - offset + up_axis * height * 0.8
