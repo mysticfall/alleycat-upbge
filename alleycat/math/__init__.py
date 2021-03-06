@@ -19,3 +19,8 @@ def normalize_euler(angle: float) -> float:
         angle -= 360
 
     return angle
+
+
+def clamp(value: float, min_value: float, max_value: float) -> float:
+    return min(max(validators.float(value), validators.float(min_value)),
+               validators.float(max_value, minimum=min_value))
