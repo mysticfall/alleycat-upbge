@@ -3,7 +3,7 @@ from itertools import chain
 from typing import Final
 
 from alleycat.reactive import RP, functions as rv
-from bge.types import KX_GameObject
+from bge.types import KX_Camera, KX_GameObject
 from bpy.types import Object
 from dependency_injector.wiring import Provide, inject
 from mathutils import Vector
@@ -19,7 +19,7 @@ from alleycat.game import GameContext
 from alleycat.input import InputMap
 
 
-class ThirdPersonCamera(TurretControl, CameraControl):
+class ThirdPersonCamera(TurretControl[KX_Camera], CameraControl):
     class ArgKeys(TurretControl.ArgKeys):
         ZOOM_INPUT: Final = "Zoom Input"
         ZOOM_SENSITIVITY: Final = "Zoom Sensitivity"
@@ -33,7 +33,8 @@ class ThirdPersonCamera(TurretControl, CameraControl):
         (ArgKeys.VIEWPOINT, Object),
     )))
 
-    distance: RP[float] = rv.from_value(1.0).map(lambda _, v: max(v, 0.0))
+    def __init__(self, obj: KX_Camera) -> None:
+        super().__init__(obj=obj)
 
     @inject
     def start(self, args: dict, input_map: InputMap = Provide[GameContext.input.mappings]) -> None:

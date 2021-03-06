@@ -2,7 +2,7 @@ from collections import OrderedDict
 from itertools import chain
 from typing import Final
 
-from bge.types import KX_GameObject
+from bge.types import KX_Camera, KX_GameObject
 from bpy.types import Object
 from dependency_injector.wiring import Provide, inject
 from returns.curry import partial
@@ -14,13 +14,16 @@ from alleycat.game import GameContext
 from alleycat.input import InputMap
 
 
-class FirstPersonCamera(TurretControl, CameraControl):
+class FirstPersonCamera(TurretControl[KX_Camera], CameraControl):
     class ArgKeys(TurretControl.ArgKeys):
         PIVOT: Final = "Pivot"
 
     args = OrderedDict(chain(TurretControl.args.items(), (
         (ArgKeys.PIVOT, Object),
     )))
+
+    def __init__(self, obj: KX_Camera) -> None:
+        super().__init__(obj=obj)
 
     # noinspection PyUnusedLocal
     @inject

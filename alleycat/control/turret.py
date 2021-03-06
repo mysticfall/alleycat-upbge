@@ -2,9 +2,10 @@ import math
 from abc import ABC
 from collections import OrderedDict
 from itertools import chain
-from typing import Final
+from typing import Final, Generic, TypeVar
 
 from alleycat.reactive import RP, RV, functions as rv
+from bge.types import KX_GameObject
 from dependency_injector.wiring import Provide, inject
 from mathutils import Euler, Vector
 from rx import Observable, operators as ops
@@ -13,8 +14,10 @@ from alleycat.common import ActivatableComponent, ArgumentReader, clamp, normali
 from alleycat.game import GameContext
 from alleycat.input import InputMap
 
+T = TypeVar("T", bound=KX_GameObject)
 
-class TurretControl(ActivatableComponent, ABC):
+
+class TurretControl(Generic[T], ActivatableComponent[T], ABC):
     class ArgKeys(ActivatableComponent.ArgKeys):
         ROTATION_INPUT: Final = "Rotation Input"
         ROTATION_SENSITIVITY: Final = "Rotation Sensitivity"
@@ -30,6 +33,9 @@ class TurretControl(ActivatableComponent, ABC):
 
     # noinspection PyArgumentList
     rotation: RV[Euler] = rv.combine_latest(pitch, yaw)(ops.map(lambda v: Euler((v[0], 0, -v[1]), "XYZ")))
+
+    def __init__(self, obj: T) -> None:
+        super().__init__(obj)
 
     @inject
     def start(

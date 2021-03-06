@@ -46,3 +46,6 @@ class BaseComponent(Generic[T], LoggingSupport, ReactiveObject, KX_PythonCompone
 
 class IDComponent(Generic[T, U], BaseComponent[T], ABC):
     blenderObject: U
+
+    def __init__(self, obj: T) -> None:
+        super().__init__(obj)
