@@ -1,4 +1,4 @@
-from _pytest.fixtures import fixture
+from pytest import fixture
 from returns.maybe import Nothing, Some
 from returns.result import Success
 

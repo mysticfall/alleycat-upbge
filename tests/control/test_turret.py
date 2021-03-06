@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
-from _pytest.python_api import approx
 from alleycat.reactive import RP, RV, functions as rv
+from pytest import approx
 from pytest_mock import MockerFixture
 
 from alleycat.common import Lookup
