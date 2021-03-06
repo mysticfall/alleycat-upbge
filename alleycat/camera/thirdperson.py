@@ -57,12 +57,12 @@ class ThirdPersonCamera(TurretControl, CameraControl):
         def zoom(value: float):
             self.distance = max(self.distance - value * 0.1 * sensitivity, 0)
 
-        def init(i: Observable, p: KX_GameObject):
-            self.callbacks.append(partial(self.process, p, viewpoint.value_or(p)))
+        def setup(i: Observable, p: KX_GameObject):
+            self.callbacks.append(partial(self.process, p, viewpoint.value_or(p)))  # type:ignore
 
             i.subscribe(zoom, on_error=self.error_handler)
 
-        init = input.bind(lambda i: pivot.map(lambda p: init(i, p)))
+        init = input.bind(lambda i: pivot.map(lambda p: setup(i, p)))
 
         init.alt(self.logger.warning)
 
