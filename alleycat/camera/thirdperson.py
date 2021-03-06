@@ -10,6 +10,7 @@ from mathutils import Vector
 from mathutils.geometry import distance_point_to_plane
 from returns.curry import curry, partial
 from rx import Observable
+from rx import operators as ops
 
 from alleycat.camera import CameraControl
 from alleycat.common import ArgumentReader
@@ -60,7 +61,7 @@ class ThirdPersonCamera(TurretControl, CameraControl):
         def setup(i: Observable, p: KX_GameObject):
             self.callbacks.append(partial(self.process, p, viewpoint.value_or(p)))  # type:ignore
 
-            i.subscribe(zoom, on_error=self.error_handler)
+            i.pipe(ops.take_until(self.on_dispose)).subscribe(zoom, on_error=self.error_handler)
 
         init = input.bind(lambda i: pivot.map(lambda p: setup(i, p)))
 

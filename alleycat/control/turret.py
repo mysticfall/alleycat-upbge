@@ -7,7 +7,7 @@ from typing import Final
 from alleycat.reactive import RP, RV, functions as rv
 from dependency_injector.wiring import Provide, inject
 from mathutils import Euler, Vector
-from rx import operators as ops
+from rx import Observable, operators as ops
 
 from alleycat.common import ActivatableComponent, ArgumentReader, clamp, normalize_angle
 from alleycat.game import GameContext
@@ -51,9 +51,15 @@ class TurretControl(ActivatableComponent, ABC):
             self.pitch += value.y * sensitivity
             self.yaw += value.x * sensitivity
 
+        def wire(observable: Observable):
+            observable.pipe(
+                ops.filter(lambda _: self.active),
+                ops.take_until(self.on_dispose)
+            ).subscribe(rotate, on_error=self.error_handler)
+
         # noinspection PyTypeChecker
         props.require(self.ArgKeys.ROTATION_INPUT, str) \
             .map(lambda s: s.split("/")) \
             .bind(input_map.observe) \
-            .map(lambda o: o.pipe(ops.filter(lambda _: self.active)).subscribe(rotate, on_error=self.error_handler)) \
+            .map(wire) \
             .alt(self.logger.warning)
