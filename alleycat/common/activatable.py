@@ -14,6 +14,13 @@ class Activatable(ReactiveObject, ABC):
     def __init__(self, **kwargs) -> None:
         super().__init__()
 
+    def activate(self, value: bool = True) -> None:
+        # noinspection PyTypeChecker
+        self.active = value
+
+    def deactivate(self) -> None:
+        self.activate(False)
+
 
 T = TypeVar("T", bound=KX_GameObject)
 
