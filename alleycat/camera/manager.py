@@ -49,6 +49,7 @@ class CameraManager(ActivatableComponent[KX_GameObject]):
         ops.map(lambda i: rx.combine_latest(*i).pipe(
             ops.map(lambda v: next((Some(c[1]) for c in v if c[0]), Nothing)))),
         ops.switch_latest(),
+        ops.start_with(Nothing),
         ops.distinct_until_changed(),
         ops.do_action(lambda c: o.logger.info("Switching camera mode to %s.", c))
     ))
