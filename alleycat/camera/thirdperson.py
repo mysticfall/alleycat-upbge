@@ -10,14 +10,14 @@ from mathutils.geometry import distance_point_to_plane
 from returns.curry import curry, partial
 
 from alleycat.camera import CameraControl
-from alleycat.common import ArgumentReader
+from alleycat.common import ActivatableComponent, ArgumentReader
 from alleycat.control import TurretControl, ZoomControl
 from alleycat.game import GameContext
 from alleycat.input import InputMap
 
 
 class ThirdPersonCamera(TurretControl[KX_Camera], ZoomControl[KX_Camera], CameraControl):
-    class ArgKeys(TurretControl.ArgKeys, ZoomControl.ArgKeys):
+    class ArgKeys(ActivatableComponent.ArgKeys):
         PIVOT: Final = "Pivot"
         VIEWPOINT: Final = "Viewpoint"
 

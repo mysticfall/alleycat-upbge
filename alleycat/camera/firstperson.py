@@ -8,14 +8,14 @@ from dependency_injector.wiring import Provide, inject
 from returns.curry import partial
 
 from alleycat.camera import CameraControl
-from alleycat.common import ArgumentReader
+from alleycat.common import ActivatableComponent, ArgumentReader
 from alleycat.control import TurretControl
 from alleycat.game import GameContext
 from alleycat.input import InputMap
 
 
 class FirstPersonCamera(TurretControl[KX_Camera], CameraControl):
-    class ArgKeys(TurretControl.ArgKeys):
+    class ArgKeys(ActivatableComponent.ArgKeys):
         PIVOT: Final = "Pivot"
 
     args = OrderedDict(chain(TurretControl.args.items(), (

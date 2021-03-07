@@ -9,7 +9,7 @@ from dependency_injector.wiring import Provide, inject
 from mathutils import Vector
 from numpy import sign
 
-from alleycat.camera import CameraControl
+from alleycat.camera import CameraControl, CameraManager, FirstPersonCamera
 from alleycat.event import EventLoopScheduler
 from alleycat.game import GameContext
 from alleycat.input import InputMap
@@ -37,27 +37,30 @@ class Character(LoggingSupport, ReactiveObject, KX_PythonComponent):
         self.name = args["name"]
 
         scene: KX_Scene = bge.logic.getCurrentScene()
-        camera: KX_GameObject = scene.getGameObjectFromObject(args["camera"])
+        manager: KX_GameObject = scene.getGameObjectFromObject(args["camera"])
 
-        view: CameraControl = None
-
-        for comp in camera.components:
-            if isinstance(comp, CameraControl):
-                self.view = comp
+        for comp in manager.components:
+            if isinstance(comp, CameraManager):
+                self.manager = comp
                 break
 
         self._last_pos = self.object.worldPosition.copy()
 
         self.logger.info("Input map: %s", input_map)
-        self.logger.info("Camera: %s", view)
+        self.logger.info("Camera Manager: %s", manager)
 
     def update(self) -> None:
         pos = self.object.worldPosition.copy()
 
-        if (pos - self._last_pos).length_squared > 0.0001:
-            angle = sign(self.view.yaw) * min(radians(5), abs(self.view.yaw))
+        view = self.manager.active_camera.value_or(None)
 
-            self.view.yaw -= angle
+        if not view:
+            return
+
+        if (pos - self._last_pos).length_squared > 0.0001:
+            angle = sign(view.yaw) * min(radians(5), abs(view.yaw))
+
+            view.yaw -= angle
             self.object.applyRotation(Vector((0, 0, -angle)), True)
 
         self._last_pos = pos
