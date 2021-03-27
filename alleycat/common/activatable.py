@@ -1,9 +1,11 @@
 from abc import ABC
 from collections import OrderedDict
+from functools import cached_property
 from typing import Final, Generic, TypeVar
 
 from alleycat.reactive import RP, ReactiveObject, functions as rv
 from bge.types import KX_GameObject
+from rx import Observable, operators as ops
 
 from alleycat.common import ArgumentReader, BaseComponent
 
@@ -43,7 +45,6 @@ class ActivatableComponent(Generic[T], BaseComponent[T], Activatable, ABC):
 
         self.logger.debug("args['%s'] = %s", self.ArgKeys.ACTIVE, self.active)
 
-    def update(self) -> None:
-        if self.valid and self.active:
-            for callback in self.callbacks:
-                callback()
+    @cached_property
+    def on_update(self) -> Observable:
+        return super().on_update.pipe(ops.filter(lambda _: self.active))

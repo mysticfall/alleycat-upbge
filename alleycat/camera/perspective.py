@@ -41,7 +41,7 @@ class PerspectiveCamera(TurretControl[KX_Camera], CameraControl, ABC):
         self.logger.debug("args['%s'] = %s", self.ArgKeys.VIEWPOINT, viewpoint)
 
         def setup(p: KX_GameObject):
-            self.callbacks.append(lambda: self.process(p, viewpoint.value_or(p)))
+            self.on_update.subscribe(lambda _: self.process(p, viewpoint.value_or(p)), on_error=self.error_handler)
 
         pivot.map(setup).alt(self.logger.warning)
 
