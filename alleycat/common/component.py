@@ -21,6 +21,7 @@ class BaseComponent(Generic[T], LoggingSupport, ReactiveObject, KX_PythonCompone
     def __init__(self, obj: T):
         super().__init__()
 
+        self._obj_name = obj.name
         self._updater = Subject()
 
     @property
@@ -38,6 +39,10 @@ class BaseComponent(Generic[T], LoggingSupport, ReactiveObject, KX_PythonCompone
     def as_game_object(self, obj: Object) -> KX_GameObject:
         # noinspection PyUnresolvedReferences
         return self.object.scene.getGameObjectFromObject(not_empty(obj))
+
+    @property
+    def logger_name(self) -> str:
+        return ".".join((super().logger_name, self._obj_name))
 
     def dispose(self) -> None:
         self._updater.on_completed()
