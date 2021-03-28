@@ -13,7 +13,7 @@ from alleycat.common import ArgumentReader, BaseComponent
 class Activatable(ReactiveObject, ABC):
     active: RP[bool] = rv.from_value(True)
 
-    def __init__(self, **kwargs) -> None:
+    def __init__(self) -> None:
         super().__init__()
 
     def activate(self, value: bool = True) -> None:
@@ -36,7 +36,7 @@ class ActivatableComponent(Generic[T], BaseComponent[T], Activatable, ABC):
     ))
 
     def __init__(self, obj: T) -> None:
-        super().__init__(obj=obj)
+        super().__init__(obj)
 
     def start(self, args: dict) -> None:
         super().start(args)

@@ -6,7 +6,7 @@ from alleycat.camera import PerspectiveCamera
 class FirstPersonCamera(PerspectiveCamera):
 
     def __init__(self, obj: KX_Camera) -> None:
-        super().__init__(obj=obj)
+        super().__init__(obj)
 
     def setup(self) -> None:
         super().setup()
