@@ -1,5 +1,5 @@
 from .exceptions import InvalidTypeError, IllegalStateError
-from .validators import validate_type
+from .validators import of_type, validate_type
 from .math import clamp, normalize_angle, normalize_euler
 from .lookup import Lookup
 from .arguments import ArgumentReader

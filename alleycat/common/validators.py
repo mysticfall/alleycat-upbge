@@ -11,8 +11,15 @@ T = TypeVar("T")
 
 
 @disable_on_env
-def validate_type(expected: Type[T], obj: Any) -> ResultE[T]:
+def of_type(expected: Type[T], obj: Any) -> T:
     if not isinstance(obj, not_empty(expected)):
-        return Failure(InvalidTypeError(f"Value {obj} is not of expected type {expected}."))
+        raise InvalidTypeError(f"Value {obj} is not of expected type {expected}.")
 
-    return Success(obj)
+    return obj
+
+
+def validate_type(expected: Type[T], obj: Any) -> ResultE[T]:
+    try:
+        return Success(of_type(expected, obj))
+    except InvalidTypeError as e:
+        return Failure(e)
