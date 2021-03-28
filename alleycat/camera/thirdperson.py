@@ -11,9 +11,7 @@ class ThirdPersonCamera(ZoomControl, PerspectiveCamera):
     def __init__(self, obj: KX_Camera) -> None:
         super().__init__(obj)
 
-    def setup(self) -> None:
-        super().setup()
-
+    def initialize(self) -> None:
         def process():
             # noinspection PyUnresolvedReferences
             pivot = self.pivot
@@ -36,3 +34,5 @@ class ThirdPersonCamera(ZoomControl, PerspectiveCamera):
             self.object.worldPosition = pivot.worldPosition - offset + up_axis * height * 0.8
 
         self.on_update.subscribe(lambda _: process(), on_error=self.error_handler)
+
+        super().initialize()

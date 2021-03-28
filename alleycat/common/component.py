@@ -10,7 +10,7 @@ from rx import Observable
 from rx.subject import Subject
 from validator_collection import not_empty
 
-from alleycat.common import ArgumentReader, IllegalStateError
+from alleycat.common import ArgumentReader, IllegalStateError, Initializable
 from alleycat.log import LoggingSupport
 
 T = TypeVar("T", bound=KX_GameObject)
@@ -22,7 +22,7 @@ class NotStartedError(IllegalStateError):
     pass
 
 
-class BaseComponent(Generic[T], LoggingSupport, ReactiveObject, KX_PythonComponent, ABC):
+class BaseComponent(Generic[T], Initializable, LoggingSupport, ReactiveObject, KX_PythonComponent, ABC):
     object: T
 
     # noinspection PyUnusedLocal
@@ -36,13 +36,13 @@ class BaseComponent(Generic[T], LoggingSupport, ReactiveObject, KX_PythonCompone
     def start(self, args: dict) -> None:
         self.logger.info("Starting component with arguments: %s", args)
 
-        def invoke_setup(start_args: Mapping[str, Any]):
+        def process_init(start_args: Mapping[str, Any]):
             self.logger.info("Invoking setup with starting parameters: %s", start_args)
 
-            return self.setup()
+            return self.initialize()
 
         self._params = self.init_params(ArgumentReader(args))
-        self._params.map(invoke_setup).alt(self.logger.error)
+        self._params.map(process_init).alt(self.logger.error)
 
     @property
     def params(self) -> Mapping[str, Any]:
@@ -55,9 +55,6 @@ class BaseComponent(Generic[T], LoggingSupport, ReactiveObject, KX_PythonCompone
     @property
     def valid(self) -> bool:
         return is_successful(self._params)
-
-    def setup(self) -> None:
-        pass
 
     @property
     def on_update(self) -> Observable:

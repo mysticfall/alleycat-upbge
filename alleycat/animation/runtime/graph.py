@@ -85,7 +85,7 @@ class AnimationGraph(ActivatableComponent[KX_GameObject]):
 
         return result.bind(lambda a: inherited.map(lambda b: a | b))
 
-    def setup(self) -> None:
+    def initialize(self) -> None:
         self.logger.info("Loading animation graph: %s.", self.tree)
 
         self.tree.start()
@@ -119,3 +119,5 @@ class AnimationGraph(ActivatableComponent[KX_GameObject]):
             ops.filter(lambda _: self.active))
 
         deltas.subscribe(lambda d: advance(d).map(process_result).value_or(None), on_error=self.error_handler)
+
+        super().initialize()
