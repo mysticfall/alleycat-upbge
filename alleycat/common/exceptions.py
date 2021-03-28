@@ -4,3 +4,7 @@ class InvalidTypeError(ValueError):
 
 class IllegalStateError(Exception):
     pass
+
+
+class AlreadyDisposedError(IllegalStateError):
+    pass

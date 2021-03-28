@@ -1,17 +1,17 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from collections import OrderedDict
 from itertools import chain
-from typing import Final
+from typing import Final, Mapping
 
 from bge.types import KX_Camera, KX_GameObject
 from bpy.types import Object
-from dependency_injector.wiring import Provide, inject
+from returns.converters import maybe_to_result
+from returns.iterables import Fold
+from returns.result import ResultE, Success
 
 from alleycat.camera import CameraControl
 from alleycat.common import ActivatableComponent, ArgumentReader
 from alleycat.control import TurretControl
-from alleycat.game import GameContext
-from alleycat.input import InputMap
 
 
 class PerspectiveCamera(TurretControl[KX_Camera], CameraControl, ABC):
@@ -25,26 +25,30 @@ class PerspectiveCamera(TurretControl[KX_Camera], CameraControl, ABC):
     )))
 
     def __init__(self, obj: KX_Camera) -> None:
-        super().__init__(obj=obj)
+        super().__init__(obj)
 
-    # noinspection PyUnusedLocal
-    @inject
-    def start(self, args: dict, input_map: InputMap = Provide[GameContext.input.mappings]) -> None:
-        super().start(args)
+    @property
+    def pivot(self) -> KX_GameObject:
+        return self.parameters["pivot"]
 
-        props = ArgumentReader(args)
+    @property
+    def viewpoint(self) -> KX_GameObject:
+        return self.parameters["viewpoint"]
 
-        pivot = props.require(self.ArgKeys.PIVOT, Object).map(self.as_game_object)
-        viewpoint = props.read(self.ArgKeys.VIEWPOINT, Object).map(self.as_game_object)
+    def validate(self, args: ArgumentReader) -> ResultE[Mapping]:
+        pivot = args \
+            .require(self.ArgKeys.PIVOT, Object) \
+            .map(self.as_game_object) \
+            .alt(lambda _: ValueError("Missing or invalid pivot object."))
 
-        self.logger.debug("args['%s'] = %s", self.ArgKeys.PIVOT, pivot)
-        self.logger.debug("args['%s'] = %s", self.ArgKeys.VIEWPOINT, viewpoint)
+        viewpoint = maybe_to_result(
+            args.read(self.ArgKeys.VIEWPOINT, Object).map(self.as_game_object)).lash(lambda _: pivot)
 
-        def setup(p: KX_GameObject):
-            self.on_update.subscribe(lambda _: self.process(p, viewpoint.value_or(p)), on_error=self.error_handler)
+        result = Fold.collect((
+            pivot.map(lambda p: ("pivot", p)),
+            viewpoint.map(lambda v: ("viewpoint", v))
+        ), Success(())).map(chain).map(dict)
 
-        pivot.map(setup).alt(self.logger.warning)
+        inherited = super().validate(args)
 
-    @abstractmethod
-    def process(self, pivot: KX_GameObject, viewpoint: KX_GameObject) -> None:
-        pass
+        return result.bind(lambda a: inherited.map(lambda b: a | b))

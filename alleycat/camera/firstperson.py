@@ -1,4 +1,4 @@
-from bge.types import KX_Camera, KX_GameObject
+from bge.types import KX_Camera
 
 from alleycat.camera import PerspectiveCamera
 
@@ -8,14 +8,16 @@ class FirstPersonCamera(PerspectiveCamera):
     def __init__(self, obj: KX_Camera) -> None:
         super().__init__(obj=obj)
 
-    def process(self, pivot: KX_GameObject, viewpoint: KX_GameObject) -> None:
-        assert pivot
-        assert viewpoint
+    def setup(self) -> None:
+        super().setup()
 
-        rotation = self.rotation.to_matrix()
+        def process():
+            rotation = self.rotation.to_matrix()
 
-        # noinspection PyUnresolvedReferences
-        orientation = pivot.worldOrientation @ rotation @ self.base_rotation
+            # noinspection PyUnresolvedReferences
+            orientation = self.pivot.worldOrientation @ rotation @ self.base_rotation
 
-        self.object.worldOrientation = orientation
-        self.object.worldPosition = viewpoint.worldPosition
+            self.object.worldOrientation = orientation
+            self.object.worldPosition = self.viewpoint.worldPosition
+
+        self.on_update.subscribe(lambda _: process(), on_error=self.error_handler)

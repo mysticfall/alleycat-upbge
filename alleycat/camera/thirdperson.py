@@ -1,4 +1,4 @@
-from bge.types import KX_Camera, KX_GameObject
+from bge.types import KX_Camera
 from mathutils import Vector
 from mathutils.geometry import distance_point_to_plane
 
@@ -11,24 +11,28 @@ class ThirdPersonCamera(ZoomControl, PerspectiveCamera):
     def __init__(self, obj: KX_Camera) -> None:
         super().__init__(obj=obj)
 
-    def process(self, pivot: KX_GameObject, viewpoint: KX_GameObject) -> None:
-        assert pivot
-        assert viewpoint
+    def setup(self) -> None:
+        super().setup()
 
-        # noinspection PyUnresolvedReferences
-        up_axis = pivot.worldOrientation @ Vector((0, 0, 1))
+        def process():
+            # noinspection PyUnresolvedReferences
+            pivot = self.pivot
 
-        height = distance_point_to_plane(viewpoint.worldPosition, pivot.worldPosition, up_axis)
+            up_axis = pivot.worldOrientation @ Vector((0, 0, 1))
 
-        rotation = self.rotation.to_matrix()
+            height = distance_point_to_plane(self.viewpoint.worldPosition, self.pivot.worldPosition, up_axis)
 
-        # noinspection PyUnresolvedReferences
-        orientation = pivot.worldOrientation @ rotation @ self.base_rotation
+            rotation = self.rotation.to_matrix()
 
-        # noinspection PyUnresolvedReferences
-        offset = pivot.worldOrientation @ rotation @ Vector((0, -1, 0)) * self.distance
+            # noinspection PyUnresolvedReferences
+            orientation = pivot.worldOrientation @ rotation @ self.base_rotation
 
-        self.object.worldOrientation = orientation
+            # noinspection PyUnresolvedReferences
+            offset = pivot.worldOrientation @ rotation @ Vector((0, -1, 0)) * self.distance
 
-        # noinspection PyUnresolvedReferences
-        self.object.worldPosition = pivot.worldPosition - offset + up_axis * height * 0.8
+            self.object.worldOrientation = orientation
+
+            # noinspection PyUnresolvedReferences
+            self.object.worldPosition = pivot.worldPosition - offset + up_axis * height * 0.8
+
+        self.on_update.subscribe(lambda _: process(), on_error=self.error_handler)
