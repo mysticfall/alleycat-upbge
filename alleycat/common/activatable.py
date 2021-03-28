@@ -39,6 +39,8 @@ class ActivatableComponent(Generic[T], BaseComponent[T], Activatable, ABC):
         super().__init__(obj=obj)
 
     def start(self, args: dict) -> None:
+        super().start(args)
+
         props = ArgumentReader(args)
 
         self.active = props.read(self.ArgKeys.ACTIVE, bool).value_or(True)
