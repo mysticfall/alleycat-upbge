@@ -37,26 +37,26 @@ class AnimationGraph(ActivatableComponent[KX_GameObject]):
 
     @property
     def animator(self) -> Animator:
-        return self.parameters["animator"]
+        return self.params["animator"]
 
     @property
     def tree(self) -> AnimationNodeTree:
-        return self.parameters["tree"]
+        return self.params["tree"]
 
     @property
     def mixer(self) -> MixAnimationNode:
-        return self.parameters["mixer"]
+        return self.params["mixer"]
 
     @property
     def move_input(self) -> Axis2DBinding:
-        return self.parameters["move_input"]
+        return self.params["move_input"]
 
     @property
     def scheduler(self) -> EventLoopScheduler:
-        return self.parameters["scheduler"]
+        return self.params["scheduler"]
 
     @inject
-    def validate(
+    def init_params(
             self,
             args: ArgumentReader,
             input_map: InputMap = Provide[GameContext.input.mappings],
@@ -81,7 +81,7 @@ class AnimationGraph(ActivatableComponent[KX_GameObject]):
             Success(("animator", GameObjectAnimator(self.object)))
         ), Success(())).map(chain).map(dict)
 
-        inherited = super().validate(args)
+        inherited = super().init_params(args)
 
         return result.bind(lambda a: inherited.map(lambda b: a | b))
 

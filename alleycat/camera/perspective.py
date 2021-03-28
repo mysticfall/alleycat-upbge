@@ -29,13 +29,13 @@ class PerspectiveCamera(TurretControl[KX_Camera], CameraControl, ABC):
 
     @property
     def pivot(self) -> KX_GameObject:
-        return self.parameters["pivot"]
+        return self.params["pivot"]
 
     @property
     def viewpoint(self) -> KX_GameObject:
-        return self.parameters["viewpoint"]
+        return self.params["viewpoint"]
 
-    def validate(self, args: ArgumentReader) -> ResultE[Mapping]:
+    def init_params(self, args: ArgumentReader) -> ResultE[Mapping]:
         pivot = args \
             .require(self.ArgKeys.PIVOT, Object) \
             .map(self.as_game_object) \
@@ -49,6 +49,6 @@ class PerspectiveCamera(TurretControl[KX_Camera], CameraControl, ABC):
             viewpoint.map(lambda v: ("viewpoint", v))
         ), Success(())).map(chain).map(dict)
 
-        inherited = super().validate(args)
+        inherited = super().init_params(args)
 
         return result.bind(lambda a: inherited.map(lambda b: a | b))

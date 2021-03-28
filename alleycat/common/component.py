@@ -29,7 +29,7 @@ class BaseComponent(Generic[T], LoggingSupport, ReactiveObject, KX_PythonCompone
     def __init__(self, obj: T):
         self._obj_name = obj.name
         self._updater = Subject()
-        self._parameters: ResultE[Mapping] = Result.from_failure(NotStartedError("Component has not started yet."))
+        self._params: ResultE[Mapping] = Result.from_failure(NotStartedError("Component has not started yet."))
 
         super().__init__()
 
@@ -41,20 +41,20 @@ class BaseComponent(Generic[T], LoggingSupport, ReactiveObject, KX_PythonCompone
 
             return self.setup()
 
-        self._parameters = self.validate(ArgumentReader(args))
-        self._parameters.map(invoke_setup).alt(self.logger.error)
+        self._params = self.init_params(ArgumentReader(args))
+        self._params.map(invoke_setup).alt(self.logger.error)
 
     @property
-    def parameters(self) -> Mapping[str, Any]:
-        return self._parameters.unwrap()
+    def params(self) -> Mapping[str, Any]:
+        return self._params.unwrap()
 
     # noinspection PyMethodMayBeStatic
-    def validate(self, args: ArgumentReader) -> ResultE[Mapping]:
+    def init_params(self, args: ArgumentReader) -> ResultE[Mapping]:
         return Result.from_value(dict())
 
     @property
     def valid(self) -> bool:
-        return is_successful(self._parameters)
+        return is_successful(self._params)
 
     def setup(self) -> None:
         pass
@@ -77,7 +77,7 @@ class BaseComponent(Generic[T], LoggingSupport, ReactiveObject, KX_PythonCompone
 
     def dispose(self) -> None:
         self._updater.on_completed()
-        self._parameters = Result.from_failure(NotStartedError("Component has been disposed already."))
+        self._params = Result.from_failure(NotStartedError("Component has been disposed already."))
 
         super().dispose()
 
