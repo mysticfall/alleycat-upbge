@@ -14,7 +14,7 @@ from validator_collection.validators import json, not_empty
 
 from alleycat import log
 from alleycat.common import ConfigMetaSchema
-from alleycat.event import EventLoopAware, EventLoopScheduler
+from alleycat.event import EventLoopScheduler, SchedulerLoopSupport
 from alleycat.input import AxisInput, TriggerInput
 from alleycat.log import LoggingSupport
 
@@ -25,7 +25,7 @@ class KeyState(Enum):
     Hold = 2
 
 
-class KeyInputSource(EventLoopAware, LoggingSupport):
+class KeyInputSource(SchedulerLoopSupport, LoggingSupport):
     pressed: RV[Set[int]] = rv.new_view()
 
     def __init__(self, scheduler: EventLoopScheduler) -> None:

@@ -14,7 +14,7 @@ from validator_collection.validators import json
 
 from alleycat import log
 from alleycat.common import ConfigMetaSchema
-from alleycat.event import EventLoopAware, EventLoopScheduler
+from alleycat.event import EventLoopScheduler, SchedulerLoopSupport
 from alleycat.input import Axis2D, AxisInput, TriggerInput
 from alleycat.log import LoggingSupport
 
@@ -36,7 +36,7 @@ class MouseButton(Enum):
             assert False
 
 
-class MouseInputSource(EventLoopAware, LoggingSupport):
+class MouseInputSource(SchedulerLoopSupport, LoggingSupport):
     position: RV[Tuple[float, float]] = rv.new_view()
 
     buttons: RV[Set[MouseButton]] = rv.new_view()

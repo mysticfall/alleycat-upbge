@@ -11,28 +11,25 @@ class ThirdPersonCamera(ZoomControl, PerspectiveCamera):
     def __init__(self, obj: KX_Camera) -> None:
         super().__init__(obj)
 
-    def initialize(self) -> None:
-        def process():
-            # noinspection PyUnresolvedReferences
-            pivot = self.pivot
+    def process(self) -> None:
+        super().process()
 
-            up_axis = pivot.worldOrientation @ Vector((0, 0, 1))
+        # noinspection PyUnresolvedReferences
+        pivot = self.pivot
 
-            height = distance_point_to_plane(self.viewpoint.worldPosition, self.pivot.worldPosition, up_axis)
+        up_axis = pivot.worldOrientation @ Vector((0, 0, 1))
 
-            rotation = self.rotation.to_matrix()
+        height = distance_point_to_plane(self.viewpoint.worldPosition, self.pivot.worldPosition, up_axis)
 
-            # noinspection PyUnresolvedReferences
-            orientation = pivot.worldOrientation @ rotation @ self.base_rotation
+        rotation = self.rotation.to_matrix()
 
-            # noinspection PyUnresolvedReferences
-            offset = pivot.worldOrientation @ rotation @ Vector((0, -1, 0)) * self.distance
+        # noinspection PyUnresolvedReferences
+        orientation = pivot.worldOrientation @ rotation @ self.base_rotation
 
-            self.object.worldOrientation = orientation
+        # noinspection PyUnresolvedReferences
+        offset = pivot.worldOrientation @ rotation @ Vector((0, -1, 0)) * self.distance
 
-            # noinspection PyUnresolvedReferences
-            self.object.worldPosition = pivot.worldPosition - offset + up_axis * height * 0.8
+        self.object.worldOrientation = orientation
 
-        self.on_update.subscribe(lambda _: process(), on_error=self.error_handler)
-
-        super().initialize()
+        # noinspection PyUnresolvedReferences
+        self.object.worldPosition = pivot.worldPosition - offset + up_axis * height * 0.8

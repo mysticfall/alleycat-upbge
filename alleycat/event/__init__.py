@@ -1,2 +1,2 @@
-from .scheduler import EventLoopScheduler, TimeMode
-from .loop import EventLoopAware
+from .loop import EventLoopAware, ComponentLoopSupport
+from .scheduler import EventLoopScheduler, SchedulerLoopSupport, TimeMode

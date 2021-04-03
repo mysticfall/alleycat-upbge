@@ -1,3 +1,4 @@
+from abc import ABC
 from datetime import datetime, timedelta
 from enum import Enum
 from queue import PriorityQueue
@@ -5,13 +6,15 @@ from time import mktime
 from typing import Final, Optional
 
 import bge
-from rx import Observable
+from rx import Observable, operators as ops
 from rx.core.typing import AbsoluteTime, RelativeTime, ScheduledAction, TState
 from rx.disposable import Disposable
 from rx.scheduler import ScheduledItem
 from rx.scheduler.periodicscheduler import PeriodicScheduler
 from rx.subject import Subject
+from validator_collection import not_empty
 
+from alleycat.event import EventLoopAware
 from alleycat.log import LoggingSupport
 
 DELTA_ZERO: Final = timedelta(0)
@@ -97,3 +100,23 @@ class EventLoopScheduler(Disposable, LoggingSupport, PeriodicScheduler):
         self._on_process.dispose()
 
         super().dispose()
+
+
+class SchedulerLoopSupport(EventLoopAware, ABC):
+
+    def __init__(self, scheduler: EventLoopScheduler) -> None:
+        self._scheduler = not_empty(scheduler)
+
+        super().__init__()
+
+        self.on_process \
+            .pipe(ops.filter(lambda _: self.processing), ops.take_until(self.on_dispose)) \
+            .subscribe(lambda _: self.process(), on_error=self.error_handler)
+
+    @property
+    def scheduler(self) -> EventLoopScheduler:
+        return self._scheduler
+
+    @property
+    def on_process(self) -> Observable:
+        return self.scheduler.on_process

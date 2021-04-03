@@ -1,28 +1,48 @@
 from abc import ABC, abstractmethod
 
 from alleycat.reactive import ReactiveObject
-from rx import operators as ops
-from validator_collection import not_empty
+from bge.types import KX_GameObject, KX_PythonComponent
+from rx import Observable
+from rx.subject import Subject
 
-from alleycat.event import EventLoopScheduler
 from alleycat.log import ErrorHandlerSupport
 
 
 class EventLoopAware(ErrorHandlerSupport, ReactiveObject, ABC):
-
-    def __init__(self, scheduler: EventLoopScheduler) -> None:
-        self._scheduler = not_empty(scheduler)
-
-        super().__init__()
-
-        scheduler.on_process \
-            .pipe(ops.take_until(self.on_dispose)) \
-            .subscribe(lambda _: self.process(), on_error=self.error_handler)
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
 
     @property
-    def scheduler(self) -> EventLoopScheduler:
-        return self._scheduler
+    def processing(self) -> bool:
+        return True
+
+    @property
+    @abstractmethod
+    def on_process(self) -> Observable:
+        pass
 
     @abstractmethod
     def process(self) -> None:
         pass
+
+
+class ComponentLoopSupport(EventLoopAware, KX_PythonComponent, ABC):
+    # noinspection PyUnusedLocal
+    def __init__(self, obj: KX_GameObject) -> None:
+        self._on_process = Subject()
+
+        super().__init__()
+
+    @property
+    def on_process(self) -> Observable:
+        return self._on_process
+
+    def update(self) -> None:
+        if self.processing:
+            self._on_process.on_next(None)
+            self.process()
+
+    def dispose(self) -> None:
+        self._on_process.on_completed()
+
+        super().dispose()
