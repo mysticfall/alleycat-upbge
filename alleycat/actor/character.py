@@ -9,7 +9,7 @@ from dependency_injector.wiring import Provide, inject
 from mathutils import Vector
 from numpy import sign
 
-from alleycat.camera import CameraControl, CameraManager, FirstPersonCamera
+from alleycat.camera import CameraManager
 from alleycat.event import EventLoopScheduler
 from alleycat.game import GameContext
 from alleycat.input import InputMap
@@ -52,7 +52,10 @@ class Character(LoggingSupport, ReactiveObject, KX_PythonComponent):
     def update(self) -> None:
         pos = self.object.worldPosition.copy()
 
-        view = self.manager.active_camera.value_or(None)
+        if not self.manager.valid:
+            return
+
+        view = self.manager.active_camera
 
         if not view:
             return
@@ -61,6 +64,6 @@ class Character(LoggingSupport, ReactiveObject, KX_PythonComponent):
             angle = sign(view.yaw) * min(radians(5), abs(view.yaw))
 
             view.yaw -= angle
-            self.object.applyRotation(Vector((0, 0, -angle)), True)
+            self.object.parent.applyRotation(Vector((0, 0, -angle)), True)
 
         self._last_pos = pos

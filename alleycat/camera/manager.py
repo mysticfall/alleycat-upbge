@@ -1,16 +1,20 @@
 from collections import OrderedDict
+from functools import cached_property
 from itertools import chain
-from typing import Callable, Final, Sequence, Type
+from typing import Callable, Final, Mapping, NamedTuple, Sequence, Type
 
 import rx
 from alleycat.reactive import RV, functions as rv
 from bge.types import KX_GameObject
 from dependency_injector.wiring import Provide, inject
 from mathutils import Vector
+from returns.curry import partial
 from returns.iterables import Fold
 from returns.maybe import Maybe, Nothing, Some
-from returns.result import ResultE, Success
+from returns.result import ResultE, Success, safe
 from rx import Observable, operators as ops
+from rx.subject import Subject
+from validator_collection import iterable
 
 from alleycat.camera import CameraControl, FirstPersonCamera, ThirdPersonCamera
 from alleycat.common import ActivatableComponent, ArgumentReader
@@ -33,65 +37,85 @@ class CameraManager(ActivatableComponent[KX_GameObject]):
         (ArgKeys.ZOOM_SENSITIVITY, 1.0)
     )))
 
-    cameras: RV[Sequence[CameraControl]] = rv.new_view()
-
-    first_person_camera: RV[Maybe[FirstPersonCamera]] = cameras.map(
-        lambda _, cameras: next((Some(c) for c in cameras if isinstance(c, FirstPersonCamera)), Nothing))
-
-    third_person_camera: RV[Maybe[FirstPersonCamera]] = cameras.map(
-        lambda _, cameras: next((Some(c) for c in cameras if isinstance(c, ThirdPersonCamera)), Nothing))
-
-    active_camera: RV[Maybe[CameraControl]] = cameras.pipe(lambda o: (
-        ops.map(lambda cameras: map(lambda c: rv.observe(c.active).pipe(
-            ops.do_action(
-                lambda a: next(map(lambda v: v.deactivate(), filter(lambda v: v != c, cameras)), None) if a else None),
-            ops.map(lambda a: (a, c))), cameras)),
-        ops.map(lambda i: rx.combine_latest(*i).pipe(
-            ops.map(lambda v: next((Some(c[1]) for c in v if c[0]), Nothing)))),
-        ops.switch_latest(),
-        ops.start_with(Nothing),
-        ops.distinct_until_changed(),
-        ops.do_action(lambda c: o.logger.info("Switching camera mode to %s.", c))
-    ))
+    active_camera: RV[CameraControl] = rv.new_view()
 
     def __init__(self, obj: KX_GameObject) -> None:
         super().__init__(obj)
 
+        self._active_camera = Subject()
+
+    @property
+    def cameras(self) -> Sequence[CameraControl]:
+        return self.params["cameras"]
+
+    @cached_property
+    def first_person_camera(self) -> Maybe[FirstPersonCamera]:
+        return next((Some(c) for c in self.cameras if isinstance(c, FirstPersonCamera)), Nothing)
+
+    @cached_property
+    def third_person_camera(self) -> Maybe[ThirdPersonCamera]:
+        return next((Some(c) for c in self.cameras if isinstance(c, ThirdPersonCamera)), Nothing)
+
     @inject
-    def start(self, args: dict, input_map: InputMap = Provide[GameContext.input.mappings]) -> None:
-        assert args
-        assert input_map
-
-        super().start(args)
-
-        # noinspection PyTypeChecker
-        cameras = tuple(filter(lambda c: isinstance(c, CameraControl), self.object.components))
-
-        # noinspection PyTypeChecker
-        self.cameras = rx.return_value(cameras)
-
-        self.logger.info("Found camera controls: %s.", cameras)
-
-        props = ArgumentReader(args)
-
-        active_camera = rv.observe(self.active_camera).pipe(
-            ops.map(lambda camera: camera.map(lambda c: rx.return_value(c)).or_else_call(rx.empty)),
-            ops.switch_latest(),
-            ops.distinct_until_changed())
-
+    def init_params(
+            self,
+            args: ArgumentReader,
+            input_map: InputMap = Provide[GameContext.input.mappings]) -> ResultE[Mapping]:
         def read_input(key_input: str, key_sensitivity: str) -> ResultE[Observable]:
             # noinspection PyShadowingBuiltins
-            input = props.require(key_input, str)
-            sensitivity = props.read(key_sensitivity, float).value_or(1.0)
-
-            self.logger.debug("args['%s'] = %s", key_input, input)
-            self.logger.debug("args['%s'] = %s", key_sensitivity, sensitivity)
+            input = args.require(key_input, str).alt(lambda _: ValueError(f"Missing input key: '%s'." % key_input))
+            sensitivity = args.read(key_sensitivity, float).value_or(1.0)
 
             # noinspection PyTypeChecker
             return input \
                 .map(lambda s: s.split("/")) \
                 .bind(input_map.observe) \
                 .map(lambda o: o.pipe(ops.map(lambda v: v * sensitivity)))
+
+        # noinspection PyTypeChecker
+        cameras = Success(filter(lambda c: isinstance(c, CameraControl), self.object.components)) \
+            .bind(safe(lambda c: tuple(iterable(c)))) \
+            .alt(lambda _: ValueError("No camera control found."))
+
+        rotation_input = read_input(self.ArgKeys.ROTATION_INPUT, self.ArgKeys.ROTATION_SENSITIVITY)
+        zoom_input = read_input(self.ArgKeys.ZOOM_INPUT, self.ArgKeys.ZOOM_SENSITIVITY)
+
+        result = Fold.collect((
+            cameras.map(lambda c: ("cameras", c)),
+            rotation_input.map(lambda i: ("rotation_input", i)),
+            zoom_input.map(lambda i: ("zoom_input", i))
+        ), Success(())).map(chain).map(dict)  # type:ignore
+
+        inherited = super().init_params(args)
+
+        return result.bind(lambda a: inherited.map(lambda b: a | b))
+
+    def initialize(self) -> None:
+        super().initialize()
+
+        class CameraState(NamedTuple):
+            camera: CameraControl
+            active: bool
+
+        def deactivate_others(current: CameraControl, active: CameraControl):
+            next(map(lambda c: c.deactivate(), filter(lambda c: c != current, self.cameras)), None) if active else None
+
+        try:
+            next(filter(lambda c: c.active, self.cameras))
+        except StopIteration:
+            next(iter(self.cameras)).activate()
+
+        camera_states = map(lambda c: rv.observe(c.active).pipe(
+            ops.do_action(partial(deactivate_others, c)),
+            ops.map(lambda state: CameraState(c, state))), self.cameras)
+
+        # noinspection PyTypeChecker
+        self.active_camera = rx.combine_latest(*camera_states).pipe(
+            ops.map(lambda states: next(s.camera for s in states if s.active)),
+            ops.distinct_until_changed(),
+            ops.do_action(lambda c: self.logger.info("Switching camera mode to %s.", c)))
+
+        active_camera = rv.observe(self.active_camera)
 
         def rotate(control: TurretControl, value: Vector):
             control.pitch += value.y
@@ -107,7 +131,7 @@ class CameraManager(ActivatableComponent[KX_GameObject]):
                 ops.switch_latest(),
                 ops.filter(lambda _: self.active),
                 ops.take_until(self.on_dispose)
-            ).subscribe(lambda v: handler(v[0], v[1]), on_error=self.error_handler)
+            ).subscribe(lambda v: handler(*v), on_error=self.error_handler)
 
         def setup_switcher(events: Observable):
             first_person_camera = active_camera.pipe(ops.filter(lambda c: isinstance(c, FirstPersonCamera)))
@@ -132,14 +156,13 @@ class CameraManager(ActivatableComponent[KX_GameObject]):
                 ops.take_until(self.on_dispose),
             ).subscribe(lambda _: self.switch_to_1st_person(), on_error=self.error_handler)
 
-        rotation_input = read_input(self.ArgKeys.ROTATION_INPUT, self.ArgKeys.ROTATION_SENSITIVITY)
-        zoom_input = read_input(self.ArgKeys.ZOOM_INPUT, self.ArgKeys.ZOOM_SENSITIVITY)
+        rotation_input = self.params["rotation_input"]
+        zoom_input = self.params["zoom_input"]
 
-        rotation_setup = rotation_input.map(lambda i: setup_input(i, TurretControl, rotate))
-        zoom_setup = zoom_input.map(lambda i: setup_input(i, ZoomControl, zoom))
-        switcher_setup = zoom_input.map(setup_switcher)
+        setup_input(rotation_input, TurretControl, rotate)
+        setup_input(zoom_input, ZoomControl, zoom)
 
-        Fold.collect((rotation_setup, zoom_setup, switcher_setup), Success(())).alt(self.logger.warning)
+        setup_switcher(zoom_input)
 
     def switch_to_1st_person(self) -> None:
         self.first_person_camera.map(lambda c: c.activate())

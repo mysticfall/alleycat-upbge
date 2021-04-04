@@ -1,9 +1,12 @@
 from abc import ABC
 from collections import OrderedDict
-from typing import Final, Generic, TypeVar
+from itertools import chain
+from typing import Final, Generic, Mapping, TypeVar
 
 from alleycat.reactive import RP, ReactiveObject, functions as rv
 from bge.types import KX_GameObject
+from returns.iterables import Fold
+from returns.result import ResultE, Success
 
 from alleycat.common import ArgumentReader, BaseComponent
 
@@ -36,14 +39,22 @@ class ActivatableComponent(Generic[T], Activatable, BaseComponent[T], ABC):
     def __init__(self, obj: T) -> None:
         super().__init__(obj=obj)
 
-    def start(self, args: dict) -> None:
-        super().start(args)
+    def init_params(self, args: ArgumentReader) -> ResultE[Mapping]:
+        # noinspection PyTypeChecker
+        active = args.require(self.ArgKeys.ACTIVE, bool).lash(lambda _: Success(False))
 
-        props = ArgumentReader(args)
+        result = Fold.collect((
+            active.map(lambda a: ("active", a)),
+        ), Success(())).map(chain).map(dict)
 
-        self.active = props.read(self.ArgKeys.ACTIVE, bool).value_or(True)
+        inherited = super().init_params(args)
 
-        self.logger.debug("args['%s'] = %s", self.ArgKeys.ACTIVE, self.active)
+        return result.bind(lambda a: inherited.map(lambda b: a | b))
+
+    def initialize(self) -> None:
+        super().initialize()
+
+        self.active = self.params["active"]
 
     @property
     def processing(self) -> bool:
