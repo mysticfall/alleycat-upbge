@@ -1,5 +1,5 @@
 from .exceptions import InvalidTypeError, IllegalStateError, AlreadyDisposedError
-from .validators import of_type, validate_type
+from .validators import of_type
 from .initializable import Initializable, AlreadyInitializedError
 from .math import clamp, normalize_angle, normalize_euler
 from .lookup import Lookup
