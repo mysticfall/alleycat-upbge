@@ -31,10 +31,10 @@ class BaseComponent(Generic[T], ComponentLoopSupport, Initializable, LoggingSupp
         super().__init__(obj)
 
     def start(self, args: dict) -> None:
-        self.logger.info("Starting component with arguments: %s", args)
+        self.logger.debug("Starting with arguments: %s", args)
 
         def process_init(start_args: Mapping[str, Any]):
-            self.logger.info("Invoking setup with starting parameters: %s", start_args)
+            self.logger.info("Initialising with parameters: %s", start_args)
 
             return self.initialize()
 
