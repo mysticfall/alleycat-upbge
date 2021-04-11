@@ -73,6 +73,9 @@ class BaseComponent(Generic[T], ComponentLoopSupport, Initializable, LoggingSupp
 
         super().dispose()
 
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}({self.object.name})"
+
 
 class IDComponent(Generic[T, U], BaseComponent[T], ABC):
     blenderObject: U
