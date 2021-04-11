@@ -20,10 +20,12 @@ class Ragdoll(Collider[KX_GameObject]):
     class ArgKeys(ActivatableComponent.ArgKeys):
         HIT_BOX_COLLECTION: Final = "Hit Box Collection"
         REQUIRED_FORCE: Final = "Required Force"
+        INITIAL_DELAY: Final = "Initial Delay"
 
     args = OrderedDict(chain(ActivatableComponent.args.items(), (
         (ArgKeys.HIT_BOX_COLLECTION, Collection),
-        (ArgKeys.REQUIRED_FORCE, 10),
+        (ArgKeys.REQUIRED_FORCE, 10.0),
+        (ArgKeys.INITIAL_DELAY, 3.0),
     )))
 
     _ragdolling: RP[bool] = rv.from_value(False)
@@ -44,6 +46,10 @@ class Ragdoll(Collider[KX_GameObject]):
         return self.params["required_force"]
 
     @property
+    def initial_delay(self) -> float:
+        return self.params["initial_delay"]
+
+    @property
     def hit_boxes(self) -> Iterable[HitBox]:
         children = map(self.as_game_object, self.collection.objects)
         components = chain.from_iterable(map(lambda o: o.components, children))
@@ -60,9 +66,15 @@ class Ragdoll(Collider[KX_GameObject]):
             .map(partial(max, 0.0)) \
             .value_or(10.0)
 
+        initial_delay = args \
+            .require(self.ArgKeys.INITIAL_DELAY, float) \
+            .map(partial(max, 0.0)) \
+            .value_or(3.0)
+
         result = Fold.collect((
             collection.map(lambda c: ("collection", c)),
             Success(("required_force", required_force)),
+            Success(("initial_delay", initial_delay)),
         ), Success(())).map(chain).map(dict)
 
         inherited = super().init_params(args)
@@ -94,7 +106,7 @@ class Ragdoll(Collider[KX_GameObject]):
 
         collisions = rx.combine_latest(self.on_collision, rv.observe(self.force))
 
-        rx.timer(3).pipe(
+        rx.timer(self.initial_delay).pipe(
             ops.map(lambda _: collisions),
             ops.switch_latest(),
             ops.filter(lambda v: v[1] > self.required_force * 1000),
