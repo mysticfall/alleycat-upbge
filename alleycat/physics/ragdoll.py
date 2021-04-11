@@ -7,12 +7,13 @@ import rx
 from alleycat.reactive import RP, RV, functions as rv
 from bge.types import KX_GameObject
 from bpy.types import Collection
+from returns.curry import partial
 from returns.iterables import Fold
 from returns.result import ResultE, Success
 from rx import operators as ops
 
 from alleycat.common import ActivatableComponent, ArgumentReader
-from alleycat.physics import Collider, CollisionEvent, HitBox
+from alleycat.physics import Collider, HitBox
 
 
 class Ragdoll(Collider[KX_GameObject], ActivatableComponent[KX_GameObject]):
@@ -22,7 +23,7 @@ class Ragdoll(Collider[KX_GameObject], ActivatableComponent[KX_GameObject]):
 
     args = OrderedDict(chain(ActivatableComponent.args.items(), (
         (ArgKeys.HIT_BOX_COLLECTION, Collection),
-        (ArgKeys.REQUIRED_FORCE, 15),
+        (ArgKeys.REQUIRED_FORCE, 10),
     )))
 
     _ragdolling: RP[bool] = rv.from_value(False)
@@ -56,11 +57,12 @@ class Ragdoll(Collider[KX_GameObject], ActivatableComponent[KX_GameObject]):
 
         required_force = args \
             .require(self.ArgKeys.REQUIRED_FORCE, float) \
-            .alt(lambda _: ValueError("Missing hit-box collection."))
+            .map(partial(max, 0.0)) \
+            .value_or(10.0)
 
         result = Fold.collect((
             collection.map(lambda c: ("collection", c)),
-            collection.map(lambda c: ("collection", c)),
+            Success(("required_force", required_force)),
         ), Success(())).map(chain).map(dict)
 
         inherited = super().init_params(args)
@@ -80,8 +82,7 @@ class Ragdoll(Collider[KX_GameObject], ActivatableComponent[KX_GameObject]):
 
         self.force = acceleration.pipe(ops.map(lambda a: self.object.mass * a), ops.start_with(0))
 
-        def on_collision(collision: CollisionEvent, force: float):
-            print("#### Force : ", force)
+        def on_collision():
             if not self._ragdolling:
                 self._ragdolling = True
                 self._ragdoll_started = datetime.now()
@@ -96,5 +97,5 @@ class Ragdoll(Collider[KX_GameObject], ActivatableComponent[KX_GameObject]):
         rx.timer(3).pipe(
             ops.map(lambda _: collisions),
             ops.switch_latest(),
-            ops.filter(lambda v: v[1] > 15000),
-        ).subscribe(lambda v: on_collision(*v), on_error=self.error_handler)
+            ops.filter(lambda v: v[1] > self.required_force * 1000),
+        ).subscribe(lambda _: on_collision(), on_error=self.error_handler)
