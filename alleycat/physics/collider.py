@@ -7,7 +7,7 @@ from mathutils import Vector
 from rx import Observable
 from rx.subject import Subject
 
-from alleycat.common import BaseComponent
+from alleycat.common import ActivatableComponent
 
 
 @dataclass(frozen=True)
@@ -24,7 +24,7 @@ class CollisionEvent:
 T = TypeVar("T", bound=KX_GameObject)
 
 
-class Collider(Generic[T], BaseComponent[T], ABC):
+class Collider(Generic[T], ActivatableComponent[T], ABC):
 
     def __init__(self, obj: T) -> None:
         super().__init__(obj)
@@ -39,7 +39,8 @@ class Collider(Generic[T], BaseComponent[T], ABC):
 
             self.logger.debug("Collision detected: %s.", evt)
 
-            self._on_collision.on_next(CollisionEvent(obj, point, normal))
+            if self.active:
+                self._on_collision.on_next(CollisionEvent(obj, point, normal))
 
         self.object.collisionCallbacks.append(callback)
 

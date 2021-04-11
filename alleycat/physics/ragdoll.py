@@ -16,7 +16,7 @@ from alleycat.common import ActivatableComponent, ArgumentReader
 from alleycat.physics import Collider, HitBox
 
 
-class Ragdoll(Collider[KX_GameObject], ActivatableComponent[KX_GameObject]):
+class Ragdoll(Collider[KX_GameObject]):
     class ArgKeys(ActivatableComponent.ArgKeys):
         HIT_BOX_COLLECTION: Final = "Hit Box Collection"
         REQUIRED_FORCE: Final = "Required Force"
