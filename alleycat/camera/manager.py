@@ -23,6 +23,11 @@ from alleycat.game import GameContext
 from alleycat.input import InputMap
 
 
+class CameraState(NamedTuple):
+    camera: CameraControl
+    active: bool
+
+
 class CameraManager(ActivatableComponent[KX_GameObject]):
     class ArgKeys(ActivatableComponent.ArgKeys):
         ROTATION_INPUT: Final = "Rotation Input"
@@ -92,10 +97,6 @@ class CameraManager(ActivatableComponent[KX_GameObject]):
 
     def initialize(self) -> None:
         super().initialize()
-
-        class CameraState(NamedTuple):
-            camera: CameraControl
-            active: bool
 
         def deactivate_others(current: CameraControl, active: CameraControl):
             next(map(lambda c: c.deactivate(), filter(lambda c: c != current, self.cameras)), None) if active else None
