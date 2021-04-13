@@ -1,8 +1,9 @@
 from abc import ABC
-from typing import Any, Generic, Mapping, TypeVar
+from typing import Any, Generic, Mapping, Type, TypeVar
 
 from bge.types import KX_GameObject, KX_PythonComponent
 from bpy.types import ID, Object
+from returns.maybe import Maybe, Nothing
 from returns.pipeline import is_successful
 from returns.result import Result, ResultE
 from validator_collection import not_empty
@@ -14,6 +15,21 @@ from alleycat.log import LoggingSupport
 T = TypeVar("T", bound=KX_GameObject)
 U = TypeVar("U", bound=ID)
 V = TypeVar("V")
+W = TypeVar("W", bound=KX_PythonComponent)
+
+
+def find_component(obj: KX_GameObject, comp_type: Type[W]) -> Maybe[W]:
+    try:
+        return Maybe.from_value(next(filter(lambda c: isinstance(c, comp_type), not_empty(obj).components)))
+    except StopIteration:
+        return Nothing
+
+
+def require_component(obj: KX_GameObject, comp_type: Type[W]) -> ResultE[W]:
+    try:
+        return Result.from_value(next(filter(lambda c: isinstance(c, comp_type), not_empty(obj).components)))
+    except StopIteration:
+        return Result.from_failure(ValueError(f"{obj} does not have any component of type {comp_type}."))
 
 
 class NotStartedError(IllegalStateError):
