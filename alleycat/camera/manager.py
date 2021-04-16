@@ -16,9 +16,8 @@ from rx import Observable, operators as ops
 from rx.subject import Subject
 from validator_collection import iterable
 
-from alleycat.camera import CameraControl, FirstPersonCamera, ThirdPersonCamera
+from alleycat.camera import CameraControl, FirstPersonCamera, RotatableCamera, ThirdPersonCamera, ZoomableCamera
 from alleycat.common import ActivatableComponent, ArgumentReader
-from alleycat.control import TurretControl, ZoomControl
 from alleycat.game import GameContext
 from alleycat.input import InputMap
 
@@ -118,11 +117,11 @@ class CameraManager(ActivatableComponent[KX_GameObject]):
 
         active_camera = rv.observe(self.active_camera)
 
-        def rotate(control: TurretControl, value: Vector):
+        def rotate(control: RotatableCamera, value: Vector):
             control.pitch += value.y
             control.yaw += value.x
 
-        def zoom(control: ZoomControl, value: float):
+        def zoom(control: ZoomableCamera, value: float):
             control.distance = max(control.distance - value * 0.1, 0)
 
         def setup_input(events: Observable, valid_type: Type, handler: Callable):
@@ -160,8 +159,8 @@ class CameraManager(ActivatableComponent[KX_GameObject]):
         rotation_input = self.params["rotation_input"]
         zoom_input = self.params["zoom_input"]
 
-        setup_input(rotation_input, TurretControl, rotate)
-        setup_input(zoom_input, ZoomControl, zoom)
+        setup_input(rotation_input, RotatableCamera, rotate)
+        setup_input(zoom_input, ZoomableCamera, zoom)
 
         setup_switcher(zoom_input)
 
