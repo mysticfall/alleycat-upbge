@@ -89,7 +89,7 @@ class CameraManager(ActivatableComponent[KX_GameObject]):
             cameras.map(lambda c: ("cameras", c)),
             rotation_input.map(lambda i: ("rotation_input", i)),
             zoom_input.map(lambda i: ("zoom_input", i))
-        ), Success(())).map(chain).map(dict)  # type:ignore
+        ), Success(())).map(chain).map(dict)
 
         inherited = super().init_params(args)
 

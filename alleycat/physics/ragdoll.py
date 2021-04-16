@@ -94,7 +94,7 @@ class Ragdoll(Collider[KX_GameObject]):
 
         self.force = acceleration.pipe(ops.map(lambda a: self.object.mass * a), ops.start_with(0))
 
-        def on_collision():
+        def on_collision() -> None:
             if not self._ragdolling:
                 self._ragdolling = True
                 self._ragdoll_started = datetime.now()

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Mapping, Sequence, Union
+from typing import Any, Mapping, Sequence, Union, cast
 
 from alleycat.reactive import functions as rv
 from dependency_injector import providers
@@ -89,4 +89,4 @@ class InputMap(Lookup[Any], LoggingSupport):
 
             return factory(items)
 
-        return create_lookup(config, InputMap)
+        return cast(InputMap, create_lookup(config, InputMap))
