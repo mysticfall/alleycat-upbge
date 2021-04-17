@@ -14,9 +14,9 @@ verify_ssl = true
 [packages]
 "numpy" = "1.19.5"
 "rx" = "3.1.1"
-"returns" = "0.15.0"
+"returns" = "0.16.0"
 "validator-collection" = "1.5.0"
-"dependency-injector" = "4.5.4"
+"dependency-injector" = "4.31.2"
 "alleycat-reactive" = "0.4.7"
 
 [requires]
