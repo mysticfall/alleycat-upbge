@@ -64,7 +64,7 @@ class AnimationGraph(ActivatableComponent[KX_GameObject]):
         def find_input() -> Axis2DBinding:
             return input_map["view"]["move"]
 
-        tree = args.require(self.ArgKeys.ANIMATION, NodeTree)
+        tree = args.require(AnimationGraph.ArgKeys.ANIMATION, NodeTree)
         mixer = tree.bind(find_mixer).alt(lambda _: ValueError("Failed to find a mixer node."))
         move_input = find_input().alt(lambda _: ValueError("Failed to find an input."))
 

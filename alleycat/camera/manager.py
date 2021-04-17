@@ -77,13 +77,13 @@ class CameraManager(ActivatableComponent[KX_GameObject]):
 
         # noinspection PyTypeChecker
         rotation_input = args \
-            .require(self.ArgKeys.ROTATION_INPUT, str) \
+            .require(CameraManager.ArgKeys.ROTATION_INPUT, str) \
             .bind(input_map.require_binding) \
             .bind(safe(lambda b: of_type(b, Axis2DBinding)))
 
         # noinspection PyTypeChecker
         zoom_input = args \
-            .require(self.ArgKeys.ZOOM_INPUT, str) \
+            .require(CameraManager.ArgKeys.ZOOM_INPUT, str) \
             .bind(input_map.require_binding) \
             .bind(safe(lambda b: of_type(b, AxisBinding)))
 

@@ -41,7 +41,7 @@ class ActivatableComponent(Generic[T], Activatable, BaseComponent[T], ABC):
 
     def init_params(self, args: ArgumentReader) -> ResultE[Mapping]:
         # noinspection PyTypeChecker
-        active = args.require(self.ArgKeys.ACTIVE, bool).lash(lambda _: Success(False))
+        active = args.require(ActivatableComponent.ArgKeys.ACTIVE, bool).lash(lambda _: Success(False))
 
         result = Fold.collect((
             active.map(lambda a: ("active", a)),

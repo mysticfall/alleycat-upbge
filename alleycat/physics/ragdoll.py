@@ -58,16 +58,16 @@ class Ragdoll(Collider[KX_GameObject]):
 
     def init_params(self, args: ArgumentReader) -> ResultE[Mapping]:
         collection = args \
-            .require(self.ArgKeys.HIT_BOX_COLLECTION, Collection) \
+            .require(Ragdoll.ArgKeys.HIT_BOX_COLLECTION, Collection) \
             .alt(lambda _: ValueError("Missing hit-box collection."))
 
         required_force = args \
-            .require(self.ArgKeys.REQUIRED_FORCE, float) \
+            .require(Ragdoll.ArgKeys.REQUIRED_FORCE, float) \
             .map(partial(max, 0.0)) \
             .value_or(10.0)
 
         initial_delay = args \
-            .require(self.ArgKeys.INITIAL_DELAY, float) \
+            .require(Ragdoll.ArgKeys.INITIAL_DELAY, float) \
             .map(partial(max, 0.0)) \
             .value_or(3.0)
 

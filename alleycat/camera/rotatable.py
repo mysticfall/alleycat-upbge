@@ -47,12 +47,12 @@ class RotatableCamera(CameraControl, ABC):
 
     def init_params(self, args: ArgumentReader) -> ResultE[Mapping]:
         pivot = args \
-            .require(self.ArgKeys.PIVOT, Object) \
+            .require(RotatableCamera.ArgKeys.PIVOT, Object) \
             .map(self.as_game_object) \
             .alt(lambda _: ValueError("Missing or invalid pivot object."))
 
         viewpoint = maybe_to_result(
-            args.read(self.ArgKeys.VIEWPOINT, Object).map(self.as_game_object)).lash(lambda _: pivot)
+            args.read(RotatableCamera.ArgKeys.VIEWPOINT, Object).map(self.as_game_object)).lash(lambda _: pivot)
 
         result = Fold.collect((
             pivot.map(lambda p: ("pivot", p)),

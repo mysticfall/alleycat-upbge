@@ -5,7 +5,6 @@ from typing import Final, Mapping
 from alleycat.reactive import functions as rv
 from bge.types import BL_ArmatureChannel, BL_ArmatureObject, KX_GameObject
 from bpy.types import CopyLocationConstraint, CopyRotationConstraint, Object, PoseBone
-from returns.curry import partial
 from returns.iterables import Fold
 from returns.result import ResultE, Success, safe
 from rx import operators as ops
@@ -43,14 +42,15 @@ class HitBox(ActivatableComponent[KX_GameObject]):
         return self.params["bone"]
 
     def init_params(self, args: ArgumentReader) -> ResultE[Mapping]:
+        # noinspection PyTypeChecker
         armature = args \
-            .require(self.ArgKeys.ARMATURE, Object) \
+            .require(HitBox.ArgKeys.ARMATURE, Object) \
             .map(self.as_game_object) \
             .bind(safe(lambda a: of_type(a, BL_ArmatureObject))) \
             .alt(lambda a: ValueError(f"Missing or invalid armature: '{a}'."))
 
         bone_name = args \
-            .require(self.ArgKeys.TARGET_BONE, str) \
+            .require(HitBox.ArgKeys.TARGET_BONE, str) \
             .alt(lambda b: ValueError(f"Missing target bone."))
 
         bone = bone_name.bind(lambda b: armature

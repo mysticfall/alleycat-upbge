@@ -29,7 +29,7 @@ class Entity(ActivatableComponent[KX_GameObject], ABC):
     @inject
     def init_params(self, args: ArgumentReader) -> ResultE[Mapping]:
         name = args \
-            .require(self.ArgKeys.NAME, str) \
+            .require(Entity.ArgKeys.NAME, str) \
             .alt(lambda _: ValueError("Missing entity's name."))
 
         result = Fold.collect((
