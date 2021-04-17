@@ -12,17 +12,18 @@ from returns.iterables import Fold
 from returns.result import ResultE, Success
 from rx import operators as ops
 
-from alleycat.common import ActivatableComponent, ArgumentReader
+from alleycat.common import ArgumentReader
+from alleycat.game import BaseComponent
 from alleycat.physics import Collider, HitBox
 
 
 class Ragdoll(Collider[KX_GameObject]):
-    class ArgKeys(ActivatableComponent.ArgKeys):
+    class ArgKeys(BaseComponent.ArgKeys):
         HIT_BOX_COLLECTION: Final = "Hit Box Collection"
         REQUIRED_FORCE: Final = "Required Force"
         INITIAL_DELAY: Final = "Initial Delay"
 
-    args = OrderedDict(chain(ActivatableComponent.args.items(), (
+    args = OrderedDict(chain(BaseComponent.args.items(), (
         (ArgKeys.HIT_BOX_COLLECTION, Collection),
         (ArgKeys.REQUIRED_FORCE, 10.0),
         (ArgKeys.INITIAL_DELAY, 3.0),

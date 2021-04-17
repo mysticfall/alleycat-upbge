@@ -1,11 +1,13 @@
 from abc import ABC
-from typing import Any, Generic, Mapping, Type, TypeVar
+from collections import OrderedDict
+from typing import Any, Final, Generic, Mapping, Type, TypeVar
 
+from alleycat.reactive import RP, functions as rv
 from bge.types import KX_GameObject, KX_PythonComponent
 from bpy.types import ID, Object
 from returns.maybe import Maybe, Nothing
 from returns.pipeline import is_successful
-from returns.result import Result, ResultE
+from returns.result import Result, ResultE, Success
 from validator_collection import not_empty
 
 from alleycat.common import ArgumentReader, IllegalStateError, Initializable
@@ -37,7 +39,16 @@ class NotStartedError(IllegalStateError):
 
 
 class BaseComponent(Generic[T], ComponentLoopSupport, Initializable, LoggingSupport, KX_PythonComponent, ABC):
+    class ArgKeys:
+        ACTIVE: Final = "Active"
+
+    args = OrderedDict((
+        (ArgKeys.ACTIVE, True),
+    ))
+
     object: T
+
+    active: RP[bool] = rv.from_value(True)
 
     # noinspection PyUnusedLocal
     def __init__(self, obj: T):
@@ -63,15 +74,29 @@ class BaseComponent(Generic[T], ComponentLoopSupport, Initializable, LoggingSupp
 
     # noinspection PyMethodMayBeStatic
     def init_params(self, args: ArgumentReader) -> ResultE[Mapping]:
-        return Result.from_value(dict())
+        active = args.read(BaseComponent.ArgKeys.ACTIVE, bool).value_or(True)
+
+        return Success(dict((("active", active),)))
+
+    def initialize(self) -> None:
+        super().initialize()
+
+        self.active = self.params["active"]
 
     @property
     def valid(self) -> bool:
         return is_successful(self._params)
 
+    def activate(self, value: bool = True) -> None:
+        # noinspection PyTypeChecker
+        self.active = value
+
+    def deactivate(self) -> None:
+        self.activate(False)
+
     @property
     def processing(self) -> bool:
-        return super().processing and self.valid
+        return super().processing and self.valid and self.active
 
     def process(self) -> None:
         pass

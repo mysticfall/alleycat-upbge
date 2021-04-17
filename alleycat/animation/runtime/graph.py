@@ -16,17 +16,17 @@ from rx import operators as ops
 from alleycat.animation import AnimationResult, Animator
 from alleycat.animation.addon import AnimationNodeTree, MixAnimationNode
 from alleycat.animation.runtime import GameObjectAnimator
-from alleycat.common import ActivatableComponent, ArgumentReader
-from alleycat.game import GameContext
+from alleycat.common import ArgumentReader
+from alleycat.game import BaseComponent, GameContext
 from alleycat.input import Axis2DBinding, InputMap
 
 
-class AnimationGraph(ActivatableComponent[KX_GameObject]):
-    class ArgKeys(ActivatableComponent.ArgKeys):
+class AnimationGraph(BaseComponent[KX_GameObject]):
+    class ArgKeys(BaseComponent.ArgKeys):
         ANIMATION: Final = "Animation"
         RM_TARGET: Final = "Root Motion Target"
 
-    args = OrderedDict(chain(ActivatableComponent.args.items(), (
+    args = OrderedDict(chain(BaseComponent.args.items(), (
         (ArgKeys.ANIMATION, NodeTree),
         (ArgKeys.RM_TARGET, Object)
     )))

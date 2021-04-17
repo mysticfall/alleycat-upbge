@@ -8,14 +8,15 @@ from dependency_injector.wiring import inject
 from returns.iterables import Fold
 from returns.result import ResultE, Success
 
-from alleycat.common import ActivatableComponent, ArgumentReader
+from alleycat.common import ArgumentReader
+from alleycat.game import BaseComponent
 
 
-class Entity(ActivatableComponent[KX_GameObject], ABC):
-    class ArgKeys(ActivatableComponent.ArgKeys):
+class Entity(BaseComponent[KX_GameObject], ABC):
+    class ArgKeys(BaseComponent.ArgKeys):
         NAME: Final = "Name"
 
-    args = OrderedDict(chain(ActivatableComponent.args.items(), (
+    args = OrderedDict(chain(BaseComponent.args.items(), (
         (ArgKeys.NAME, "Entity"),
     )))
 

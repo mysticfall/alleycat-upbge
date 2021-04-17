@@ -9,15 +9,16 @@ from returns.iterables import Fold
 from returns.result import ResultE, Success, safe
 from rx import operators as ops
 
-from alleycat.common import ActivatableComponent, ArgumentReader, of_type
+from alleycat.common import ArgumentReader, of_type
+from alleycat.game import BaseComponent
 
 
-class HitBox(ActivatableComponent[KX_GameObject]):
-    class ArgKeys(ActivatableComponent.ArgKeys):
+class HitBox(BaseComponent[KX_GameObject]):
+    class ArgKeys(BaseComponent.ArgKeys):
         ARMATURE: Final = "Armature"
         TARGET_BONE: Final = "Target Bone"
 
-    args = OrderedDict(chain(ActivatableComponent.args.items(), (
+    args = OrderedDict(chain(BaseComponent.args.items(), (
         (ArgKeys.ARMATURE, Object),
         (ArgKeys.TARGET_BONE, "bone"),
     )))

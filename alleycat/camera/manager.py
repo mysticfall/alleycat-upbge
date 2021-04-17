@@ -17,8 +17,8 @@ from rx.subject import Subject
 from validator_collection import iterable
 
 from alleycat.camera import CameraControl, FirstPersonCamera, RotatableCamera, ThirdPersonCamera, ZoomableCamera
-from alleycat.common import ActivatableComponent, ArgumentReader, of_type
-from alleycat.game import GameContext
+from alleycat.common import ArgumentReader, of_type
+from alleycat.game import BaseComponent, GameContext
 from alleycat.input import Axis2DBinding, AxisBinding, InputMap
 
 
@@ -27,12 +27,12 @@ class CameraState(NamedTuple):
     active: bool
 
 
-class CameraManager(ActivatableComponent[KX_GameObject]):
-    class ArgKeys(ActivatableComponent.ArgKeys):
+class CameraManager(BaseComponent[KX_GameObject]):
+    class ArgKeys(BaseComponent.ArgKeys):
         ROTATION_INPUT: Final = "Rotation Input"
         ZOOM_INPUT: Final = "Zoom Input"
 
-    args = OrderedDict(chain(ActivatableComponent.args.items(), (
+    args = OrderedDict(chain(BaseComponent.args.items(), (
         (ArgKeys.ROTATION_INPUT, "view/rotate"),
         (ArgKeys.ZOOM_INPUT, "view/zoom")
     )))

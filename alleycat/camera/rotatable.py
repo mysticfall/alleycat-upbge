@@ -14,11 +14,11 @@ from returns.result import ResultE, Success
 from rx import operators as ops
 
 from alleycat.camera import CameraControl
-from alleycat.common import ActivatableComponent, ArgumentReader, clamp, normalize_angle
+from alleycat.common import ArgumentReader, clamp, normalize_angle
 
 
 class RotatableCamera(CameraControl, ABC):
-    class ArgKeys(ActivatableComponent.ArgKeys):
+    class ArgKeys(CameraControl.ArgKeys):
         PIVOT: Final = "Pivot"
         VIEWPOINT: Final = "Viewpoint"
 
