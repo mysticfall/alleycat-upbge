@@ -6,7 +6,7 @@ from typing import Final, Mapping
 from alleycat.reactive import functions as rv
 from bge.types import KX_GameObject
 from bpy.types import NodeTree, Object
-from dependency_injector.wiring import Provide, inject
+from dependency_injector.wiring import Provide
 from mathutils import Vector
 from returns.iterables import Fold
 from returns.maybe import Maybe
@@ -31,6 +31,8 @@ class AnimationGraph(BaseComponent[KX_GameObject]):
         (ArgKeys.RM_TARGET, Object)
     )))
 
+    input_map: InputMap = Provide[GameContext.input.mappings]
+
     # noinspection PyUnusedLocal
     def __init__(self, obj: KX_GameObject):
         super().__init__(obj)
@@ -51,18 +53,14 @@ class AnimationGraph(BaseComponent[KX_GameObject]):
     def move_input(self) -> Axis2DBinding:
         return self.params["move_input"]
 
-    @inject
-    def init_params(
-            self,
-            args: ArgumentReader,
-            input_map: InputMap = Provide[GameContext.input.mappings]) -> ResultE[Mapping]:
+    def init_params(self, args: ArgumentReader) -> ResultE[Mapping]:
         @safe
         def find_mixer(t: AnimationNodeTree) -> MixAnimationNode:
             return t.nodes.get("Mix")
 
         @safe
         def find_input() -> Axis2DBinding:
-            return input_map["view"]["move"]
+            return self.input_map["view"]["move"]
 
         tree = args.require(AnimationGraph.ArgKeys.ANIMATION, NodeTree)
         mixer = tree.bind(find_mixer).alt(lambda _: ValueError("Failed to find a mixer node."))

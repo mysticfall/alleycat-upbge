@@ -6,7 +6,7 @@ from typing import Callable, Final, Mapping, NamedTuple, Sequence, Type
 import rx
 from alleycat.reactive import RV, functions as rv
 from bge.types import KX_GameObject
-from dependency_injector.wiring import Provide, inject
+from dependency_injector.wiring import Provide
 from mathutils import Vector
 from returns.curry import partial
 from returns.iterables import Fold
@@ -39,6 +39,8 @@ class CameraManager(BaseComponent[KX_GameObject]):
 
     active_camera: RV[CameraControl] = rv.new_view()
 
+    input_map: InputMap = Provide[GameContext.input.mappings]
+
     def __init__(self, obj: KX_GameObject) -> None:
         super().__init__(obj)
 
@@ -64,12 +66,7 @@ class CameraManager(BaseComponent[KX_GameObject]):
     def third_person_camera(self) -> Maybe[ThirdPersonCamera]:
         return next((Some(c) for c in self.cameras if isinstance(c, ThirdPersonCamera)), Nothing)
 
-    @inject
-    def init_params(
-            self,
-            args: ArgumentReader,
-            input_map: InputMap = Provide[GameContext.input.mappings]) -> ResultE[Mapping]:
-
+    def init_params(self, args: ArgumentReader) -> ResultE[Mapping]:
         # noinspection PyTypeChecker
         cameras = Success(filter(lambda c: isinstance(c, CameraControl), self.object.components)) \
             .bind(safe(lambda c: tuple(iterable(c)))) \
@@ -78,13 +75,13 @@ class CameraManager(BaseComponent[KX_GameObject]):
         # noinspection PyTypeChecker
         rotation_input = args \
             .require(CameraManager.ArgKeys.ROTATION_INPUT, str) \
-            .bind(input_map.require_binding) \
+            .bind(self.input_map.require_binding) \
             .bind(safe(lambda b: of_type(b, Axis2DBinding)))
 
         # noinspection PyTypeChecker
         zoom_input = args \
             .require(CameraManager.ArgKeys.ZOOM_INPUT, str) \
-            .bind(input_map.require_binding) \
+            .bind(self.input_map.require_binding) \
             .bind(safe(lambda b: of_type(b, AxisBinding)))
 
         result = Fold.collect((

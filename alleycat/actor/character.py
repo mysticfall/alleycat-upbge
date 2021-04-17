@@ -5,7 +5,7 @@ import bge
 from alleycat.reactive import ReactiveObject
 from bge.types import KX_GameObject, KX_PythonComponent, KX_Scene
 from bpy.types import Object
-from dependency_injector.wiring import Provide, inject
+from dependency_injector.wiring import Provide
 from mathutils import Vector
 from numpy import sign
 
@@ -22,18 +22,17 @@ class Character(LoggingSupport, ReactiveObject, KX_PythonComponent):
         ("camera", Object),
     ))
 
+    input_map: InputMap = Provide[GameContext.input.mappings]
+
+    scheduler: EventLoopScheduler = Provide[GameContext.scheduler]
+
     _last_pos: Vector
 
     # noinspection PyUnusedLocal
     def __init__(self, obj: KX_GameObject):
         super().__init__()
 
-    @inject
-    def start(
-            self,
-            args: dict,
-            input_map: InputMap = Provide[GameContext.input.mappings],
-            scheduler: EventLoopScheduler = Provide[GameContext.scheduler]) -> None:
+    def start(self, args: dict) -> None:
         self.name = args["name"]
 
         scene: KX_Scene = bge.logic.getCurrentScene()
@@ -46,7 +45,7 @@ class Character(LoggingSupport, ReactiveObject, KX_PythonComponent):
 
         self._last_pos = self.object.worldPosition.copy()
 
-        self.logger.info("Input map: %s", input_map)
+        self.logger.info("Input map: %s", self.input_map)
         self.logger.info("Camera Manager: %s", manager)
 
     def update(self) -> None:

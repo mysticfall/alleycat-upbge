@@ -4,7 +4,6 @@ from itertools import chain
 from typing import Final, Mapping
 
 from bge.types import KX_GameObject
-from dependency_injector.wiring import inject
 from returns.iterables import Fold
 from returns.result import ResultE, Success
 
@@ -27,7 +26,6 @@ class Entity(BaseComponent[KX_GameObject], ABC):
     def name(self) -> str:
         return self.params["name"]
 
-    @inject
     def init_params(self, args: ArgumentReader) -> ResultE[Mapping]:
         name = args \
             .require(Entity.ArgKeys.NAME, str) \
