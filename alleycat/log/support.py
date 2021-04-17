@@ -1,4 +1,4 @@
-from functools import cached_property, partial
+from functools import cached_property
 from logging import Logger, getLogger
 
 from alleycat import log
@@ -20,4 +20,4 @@ class LoggingSupport(ErrorHandlerSupport):
 
     @property
     def error_handler(self) -> ErrorHandler:
-        return partial(self.logger.exception, "Unhandled exception occurred.")
+        return lambda e: self.logger.exception(e, exc_info=True)

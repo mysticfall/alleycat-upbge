@@ -12,6 +12,9 @@ class ConsoleLogger(Handler):
     def emit(self, record) -> None:
         context = None
 
+        if not hasattr(bpy.context.screen, "areas"):
+            return
+
         for area in bpy.context.screen.areas:
             if area.type == "CONSOLE":
                 context = {
