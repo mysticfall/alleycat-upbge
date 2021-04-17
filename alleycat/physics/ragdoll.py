@@ -111,4 +111,5 @@ class Ragdoll(Collider[KX_GameObject]):
             ops.map(lambda _: collisions),
             ops.switch_latest(),
             ops.filter(lambda v: v[1] > self.required_force * 1000),
+            ops.take_until(self.on_dispose)
         ).subscribe(lambda _: on_collision(), on_error=self.error_handler)
