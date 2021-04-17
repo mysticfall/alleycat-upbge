@@ -3,6 +3,7 @@ from typing import Sequence, Set, Type
 from bpy.utils import register_class, unregister_class
 from nodeitems_utils import NodeItem, register_node_categories, unregister_node_categories
 
+from dependency_injector import wiring
 from alleycat.animation.addon import AnimationNodeCategory, AnimationNodeTree, AnimationOutputNode, MixAnimationNode, \
     NodeSocketAnimation, PlayActionNode
 from alleycat.nodetree import NodeSocketFloat0, NodeSocketFloat0To1
@@ -43,6 +44,11 @@ def register() -> None:
         register_class(t)
 
     register_node_categories("ANIMATION_NODES", NodeCategories)
+
+    # Just to make sure that the module is loaded from the addon, not from a game project.
+    # If wiring module happens to be loaded from a project first, it will get reloaded when launching it
+    # the second time and failing to wire because 'isinstance(..., _Marker)' will evaluate to 'False'.
+    wiring.unwire()
 
 
 def unregister() -> None:

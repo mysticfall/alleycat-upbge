@@ -64,10 +64,9 @@ class Bootstrap(LoggingSupport, KX_PythonComponent):
         sys.excepthook = except_hook
 
         self.context.wire(modules=[
-            sys.modules["alleycat.actor"],
-            sys.modules["alleycat.animation.runtime"],
-            sys.modules["alleycat.camera"],
-            sys.modules["alleycat.physics"]])
+            sys.modules["alleycat.actor.character"],
+            sys.modules["alleycat.animation.runtime.graph"],
+            sys.modules["alleycat.camera.manager"]])
 
         self.logger.info("Bootstrap has completed successfully.")
 
@@ -79,4 +78,5 @@ class Bootstrap(LoggingSupport, KX_PythonComponent):
         self.logger.info("Disposing context.")
 
         if self.context:
+            self.context.unwire()
             self.context.shutdown_resources()
