@@ -17,9 +17,9 @@ from rx.subject import Subject
 from validator_collection import iterable
 
 from alleycat.camera import CameraControl, FirstPersonCamera, RotatableCamera, ThirdPersonCamera, ZoomableCamera
-from alleycat.common import ActivatableComponent, ArgumentReader
+from alleycat.common import ActivatableComponent, ArgumentReader, of_type
 from alleycat.game import GameContext
-from alleycat.input import InputMap
+from alleycat.input import Axis2DBinding, AxisBinding, InputMap
 
 
 class CameraState(NamedTuple):
@@ -30,15 +30,11 @@ class CameraState(NamedTuple):
 class CameraManager(ActivatableComponent[KX_GameObject]):
     class ArgKeys(ActivatableComponent.ArgKeys):
         ROTATION_INPUT: Final = "Rotation Input"
-        ROTATION_SENSITIVITY: Final = "Rotation Sensitivity"
         ZOOM_INPUT: Final = "Zoom Input"
-        ZOOM_SENSITIVITY: Final = "Zoom Sensitivity"
 
     args = OrderedDict(chain(ActivatableComponent.args.items(), (
         (ArgKeys.ROTATION_INPUT, "view/rotate"),
-        (ArgKeys.ROTATION_SENSITIVITY, 1.0),
-        (ArgKeys.ZOOM_INPUT, "view/zoom"),
-        (ArgKeys.ZOOM_SENSITIVITY, 1.0)
+        (ArgKeys.ZOOM_INPUT, "view/zoom")
     )))
 
     active_camera: RV[CameraControl] = rv.new_view()
@@ -51,6 +47,14 @@ class CameraManager(ActivatableComponent[KX_GameObject]):
     @property
     def cameras(self) -> Sequence[CameraControl]:
         return self.params["cameras"]
+
+    @property
+    def rotation_input(self) -> Axis2DBinding:
+        return self.params["rotation_input"]
+
+    @property
+    def zoom_input(self) -> AxisBinding:
+        return self.params["zoom_input"]
 
     @cached_property
     def first_person_camera(self) -> Maybe[FirstPersonCamera]:
@@ -65,24 +69,23 @@ class CameraManager(ActivatableComponent[KX_GameObject]):
             self,
             args: ArgumentReader,
             input_map: InputMap = Provide[GameContext.input.mappings]) -> ResultE[Mapping]:
-        def read_input(key_input: str, key_sensitivity: str) -> ResultE[Observable]:
-            # noinspection PyShadowingBuiltins
-            input = args.require(key_input, str).alt(lambda _: ValueError(f"Missing input key: '%s'." % key_input))
-            sensitivity = args.read(key_sensitivity, float).value_or(1.0)
-
-            # noinspection PyTypeChecker
-            return input \
-                .map(lambda s: s.split("/")) \
-                .bind(input_map.observe) \
-                .map(lambda o: o.pipe(ops.map(lambda v: v * sensitivity)))
 
         # noinspection PyTypeChecker
         cameras = Success(filter(lambda c: isinstance(c, CameraControl), self.object.components)) \
             .bind(safe(lambda c: tuple(iterable(c)))) \
             .alt(lambda _: ValueError("No camera control found."))
 
-        rotation_input = read_input(self.ArgKeys.ROTATION_INPUT, self.ArgKeys.ROTATION_SENSITIVITY)
-        zoom_input = read_input(self.ArgKeys.ZOOM_INPUT, self.ArgKeys.ZOOM_SENSITIVITY)
+        # noinspection PyTypeChecker
+        rotation_input = args \
+            .require(self.ArgKeys.ROTATION_INPUT, str) \
+            .bind(input_map.require_binding) \
+            .bind(safe(lambda b: of_type(b, Axis2DBinding)))
+
+        # noinspection PyTypeChecker
+        zoom_input = args \
+            .require(self.ArgKeys.ZOOM_INPUT, str) \
+            .bind(input_map.require_binding) \
+            .bind(safe(lambda b: of_type(b, AxisBinding)))
 
         result = Fold.collect((
             cameras.map(lambda c: ("cameras", c)),
@@ -156,13 +159,13 @@ class CameraManager(ActivatableComponent[KX_GameObject]):
                 ops.take_until(self.on_dispose),
             ).subscribe(lambda _: self.switch_to_1st_person(), on_error=self.error_handler)
 
-        rotation_input = self.params["rotation_input"]
-        zoom_input = self.params["zoom_input"]
+        on_rotate = rv.observe(self.rotation_input.value)
+        on_zoom = rv.observe(self.zoom_input.value)
 
-        setup_input(rotation_input, RotatableCamera, rotate)
-        setup_input(zoom_input, ZoomableCamera, zoom)
+        setup_input(on_rotate, RotatableCamera, rotate)
+        setup_input(on_zoom, ZoomableCamera, zoom)
 
-        setup_switcher(zoom_input)
+        setup_switcher(on_zoom)
 
     def switch_to_1st_person(self) -> None:
         self.first_person_camera.map(lambda c: c.activate())

@@ -5,8 +5,10 @@ from typing import Mapping
 from alleycat.reactive import RP, RV, functions as rv
 from dependency_injector import providers
 from dependency_injector.providers import Factory, FactoryAggregate
-from pytest import fixture
+from pytest import fixture, raises
+from returns.functions import raise_exception
 from returns.maybe import Nothing, Some
+from returns.result import Success
 from rx import Observable
 
 from alleycat.input import Input, InputBinding, InputMap
@@ -92,8 +94,24 @@ def test_find_binding(
     mapping = InputMap.from_config(binding_factory, input_factory, config)
 
     assert mapping.find_binding("quit").map(lambda b: b.name) == Some("Exit Game")
-    assert mapping.find_binding(("general", "menu")).map(lambda b: b.name) == Some("Show Menu")
-    assert mapping.find_binding(("view", "zoom")).map(lambda b: b.name) == Nothing
+    assert mapping.find_binding("general/menu").map(lambda b: b.name) == Some("Show Menu")
+    assert mapping.find_binding("view/zoom").map(lambda b: b.name) == Nothing
+
+
+def test_require_binding(
+        config: Mapping,
+        binding_factory: providers.Provider[InputBinding],
+        input_factory: providers.Provider[Input]):
+    mapping = InputMap.from_config(binding_factory, input_factory, config)
+
+    assert mapping.require_binding("quit").map(lambda b: b.name) == Success("Exit Game")
+    assert mapping.require_binding("general/menu").map(lambda b: b.name) == Success("Show Menu")
+
+    with raises(ValueError) as e:
+        mapping.require_binding("view/zoom").map(lambda b: b.name).alt(raise_exception)
+
+    assert e and e.value and len(e.value.args) > 0
+    assert e.value.args[0] == "Unknown input path: 'view/zoom'."
 
 
 def test_observe(
@@ -106,7 +124,7 @@ def test_observe(
 
     assert binding
 
-    value = mapping.observe(("view", "rotate")).unwrap()
+    value = mapping.observe("view/rotate").unwrap()
 
     assert isinstance(value, Observable)
 
@@ -119,7 +137,7 @@ def test_observe(
 
     assert values == [0.0, 0.5]
 
-    error = mapping.observe(("view", "zoom")).swap().unwrap()
+    error = mapping.observe("view/zoom").swap().unwrap()
 
     assert isinstance(error, ValueError)
     assert str(error) == "Unknown input path: 'view/zoom'."

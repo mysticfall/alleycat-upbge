@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-from typing import Any, Mapping, Sequence, Union, cast
+from typing import Any, Mapping, Sequence, cast
 
 from alleycat.reactive import functions as rv
 from dependency_injector import providers
 from returns.converters import maybe_to_result
 from returns.maybe import Maybe, Nothing, Some
 from returns.methods import cond
-from returns.pipeline import flow
-from returns.pointfree import alt, map_
 from returns.result import ResultE
 from rx import Observable
 from validator_collection.validators import not_empty
@@ -26,31 +24,24 @@ class InputMap(Lookup[Any], LoggingSupport):
 
         self.logger.info("Created an input map with %d categories: %s.", len(values), ", ".join(values.keys()))
 
-    def find_binding(self, path: Union[str, Sequence[str]]) -> Maybe[InputBinding]:
-        not_empty(path)
+    def find_binding(self, path: str) -> Maybe[InputBinding]:
+        segments = not_empty(path).split("/")
 
-        segments: Sequence[str]
+        def resolve(p: Sequence[str], lookup: Any) -> Maybe[Any]:
+            if not isinstance(lookup, Lookup):
+                return Nothing
 
-        if isinstance(path, str):
-            segments = (path,)
-        else:
-            segments = path
+            return lookup.find(p[0]).bind(lambda i: Some(i) if len(p) == 1 else resolve(p[1:], i))
 
-        return self._resolve(segments, self).bind(lambda i: cond(Maybe, isinstance(i, InputBinding), i))
+        return resolve(segments, self).bind(lambda i: cond(Maybe, isinstance(i, InputBinding), i))
 
-    def observe(self, path: Union[str, Sequence[str]]) -> ResultE[Observable]:
-        return flow(
-            not_empty(path),
-            self.find_binding,
-            map_(lambda i: rv.observe(i.value)),  # type:ignore
-            maybe_to_result,
-            alt(lambda _: ValueError(f"Unknown input path: '{'/'.join(path)}'.")))  # type:ignore
+    def require_binding(self, path: str) -> ResultE[InputBinding]:
+        # noinspection PyTypeChecker
+        return maybe_to_result(self.find_binding(path)) \
+            .alt(lambda _: ValueError(f"Unknown input path: '{path}'."))
 
-    def _resolve(self, path: Sequence[str], lookup: Any) -> Maybe[Any]:
-        if not isinstance(lookup, Lookup):
-            return Nothing
-
-        return lookup.find(path[0]).bind(lambda i: Some(i) if len(path) == 1 else self._resolve(path[1:], i))
+    def observe(self, path: str) -> ResultE[Observable]:
+        return self.require_binding(path).map(lambda b: rv.observe(b.value))
 
     @classmethod
     def from_config(cls,
