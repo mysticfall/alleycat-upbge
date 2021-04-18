@@ -4,7 +4,6 @@ from typing import Mapping
 
 from alleycat.reactive import RP, functions as rv
 from bge.types import KX_GameObject
-from dependency_injector.wiring import inject
 from mathutils import Vector
 from returns.iterables import Fold
 from returns.result import ResultE, Success
@@ -26,7 +25,6 @@ class Sighted(BaseComponent[KX_GameObject], ABC):
     def vision(self) -> Vision:
         return self.params["vision"]
 
-    @inject
     def init_params(self, args: ArgumentReader) -> ResultE[Mapping]:
         result = Fold.collect((
             require_component(self.object, Vision).map(lambda v: ("vision", v)),

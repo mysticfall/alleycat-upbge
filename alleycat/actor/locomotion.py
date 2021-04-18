@@ -30,7 +30,6 @@ class Mobile(BaseComponent[KX_GameObject], ABC):
     def locomotion(self) -> Locomotion:
         return self.params["locomotion"]
 
-    @inject
     def init_params(self, args: ArgumentReader) -> ResultE[Mapping]:
         result = Fold.collect((
             require_component(self.object, Locomotion).map(lambda v: ("locomotion", v)),

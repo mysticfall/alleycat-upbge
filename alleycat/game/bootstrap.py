@@ -73,7 +73,9 @@ class Bootstrap(LoggingSupport, KX_PythonComponent):
             sys.modules["alleycat.actor.character"],
             sys.modules["alleycat.actor.control"],
             sys.modules["alleycat.animation.runtime.graph"],
-            sys.modules["alleycat.camera.manager"]])
+            sys.modules["alleycat.camera.manager"],
+            sys.modules["alleycat.physics.ragdoll"]
+        ])
 
         for callback in _initializers:
             try:

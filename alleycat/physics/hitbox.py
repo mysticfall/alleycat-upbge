@@ -1,16 +1,63 @@
 from collections import OrderedDict
 from itertools import chain
-from typing import Final, Mapping
+from typing import Final, Mapping, Sequence
 
 from alleycat.reactive import functions as rv
 from bge.types import BL_ArmatureChannel, BL_ArmatureObject, KX_GameObject
-from bpy.types import CopyLocationConstraint, CopyRotationConstraint, Object, PoseBone
+from bpy.types import Constraint, CopyLocationConstraint, CopyRotationConstraint, Object, PoseBone
+from returns.curry import partial
 from returns.iterables import Fold
 from returns.result import ResultE, Success, safe
 from rx import operators as ops
+from validator_collection import not_empty
 
-from alleycat.common import ArgumentReader, of_type
+from alleycat.common import ArgumentReader, clamp, of_type
 from alleycat.game import BaseComponent
+
+
+class ConstraintControl:
+    def __init__(self, constraint: Constraint, binding: bool = True) -> None:
+        self._constraint = not_empty(constraint)
+
+        self._binding = binding
+        self._init_value = constraint.influence
+
+        if binding:
+            self._weight = 0.0 if constraint.mute else constraint.influence
+        else:
+            self._weight = constraint.influence if constraint.mute else 0.0
+
+    @property
+    def constraint(self) -> Constraint:
+        return self._constraint
+
+    @property
+    def binding(self) -> bool:
+        return self._binding
+
+    @property
+    def init_value(self) -> float:
+        return self._init_value
+
+    @property
+    def weight(self) -> float:
+        return self._weight
+
+    @weight.setter
+    def weight(self, value: float) -> None:
+        self._weight = clamp(value, 0.0, 1.0)
+
+        if self.binding:
+            influence = self.init_value * value
+            self.constraint.mute = influence == 0.0 or value == 0.0
+        else:
+            influence = self.init_value * (1.0 - value)
+            self.constraint.mute = influence == 0.0 or value == 1.0
+
+        self.constraint.influence = influence
+
+    def __repr__(self) -> str:
+        return self.constraint.name
 
 
 class HitBox(BaseComponent[KX_GameObject]):
@@ -42,6 +89,10 @@ class HitBox(BaseComponent[KX_GameObject]):
     def bone(self) -> PoseBone:
         return self.params["bone"]
 
+    @property
+    def controls(self) -> Sequence[ConstraintControl]:
+        return self.params["controls"]
+
     def init_params(self, args: ArgumentReader) -> ResultE[Mapping]:
         # noinspection PyTypeChecker
         armature = args \
@@ -52,12 +103,26 @@ class HitBox(BaseComponent[KX_GameObject]):
 
         bone_name = args \
             .require(HitBox.ArgKeys.TARGET_BONE, str) \
-            .alt(lambda b: ValueError(f"Missing target bone."))
+            .alt(lambda b: ValueError("Missing target bone."))
 
         bone = bone_name.bind(lambda b: armature
                               .map(lambda a: a.blenderObject.pose.bones.get(b))
                               .bind(safe(lambda p: of_type(p, PoseBone)))
                               .alt(lambda _: ValueError(f"No such bone exists: '{b}'.")))
+
+        # noinspection PyUnresolvedReferences
+        bl_object = self.object.blenderObject
+
+        def is_hitbox_binding(c: Constraint) -> bool:
+            is_type = partial(isinstance, c)
+            is_copy_type = (is_type(CopyLocationConstraint) or is_type(CopyRotationConstraint))
+
+            return is_copy_type and getattr(c, "target") is bl_object
+
+        def create_control(c: Constraint) -> ConstraintControl:
+            return ConstraintControl(c, is_hitbox_binding(c))
+
+        controls = bone.map(lambda b: tuple(map(create_control, b.constraints)))
 
         channel = bone_name.bind(lambda b: armature
                                  .map(lambda a: a.channels.get(b))
@@ -67,7 +132,8 @@ class HitBox(BaseComponent[KX_GameObject]):
         result = Fold.collect((
             armature.map(lambda a: ("armature", a)),
             bone.map(lambda b: ("bone", b)),
-            channel.map(lambda c: ("channel", c))
+            channel.map(lambda c: ("channel", c)),
+            controls.map(lambda c: ("controls", c))
         ), Success(())).map(chain).map(dict)
 
         inherited = super().init_params(args)
@@ -85,17 +151,15 @@ class HitBox(BaseComponent[KX_GameObject]):
         if active:
             self.logger.debug("Activating ragdoll physics.")
 
-            target = self.object.blenderObject
-
-            for constraint in self.bone.constraints:
-                constraint.mute = not (isinstance(constraint,
-                                                  CopyLocationConstraint) and constraint.target is target) \
-                                  and not (isinstance(constraint,
-                                                      CopyRotationConstraint) and constraint.target is target)
+            for c in self.controls:
+                c.weight = 1.0
 
             self.object.enableRigidBody()
         else:
             self.logger.debug("Disabling ragdoll physics.")
+
+            for c in self.controls:
+                c.weight = 0.0
 
             self.object.disableRigidBody()
 
@@ -103,4 +167,5 @@ class HitBox(BaseComponent[KX_GameObject]):
         super().process()
 
         if not self.active:
+            # noinspection PyUnresolvedReferences
             self.object.worldTransform = self.armature.worldTransform @ self.channel.pose_matrix
