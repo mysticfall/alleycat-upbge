@@ -4,14 +4,20 @@ import sys
 from collections import OrderedDict
 from logging.config import fileConfig
 from pathlib import Path
+from typing import Callable, List
 
 from bge.types import KX_GameObject, KX_PythonComponent
 from bpy.path import abspath
-from validator_collection import validators
+from validator_collection import not_empty, validators
 
 from alleycat.event import EventLoopScheduler
 from alleycat.game import GameContext
 from alleycat.log import LoggingSupport
+
+Initializer = Callable[[], None]
+
+_initialized = False
+_initializers: List[Initializer] = []
 
 
 class Bootstrap(LoggingSupport, KX_PythonComponent):
@@ -68,6 +74,17 @@ class Bootstrap(LoggingSupport, KX_PythonComponent):
             sys.modules["alleycat.animation.runtime.graph"],
             sys.modules["alleycat.camera.manager"]])
 
+        for callback in _initializers:
+            try:
+                callback()
+            except Exception as e:
+                self.logger.exception(e, exc_info=True)
+
+        global _initialized
+
+        _initialized = True
+        _initializers.clear()
+
         self.logger.info("Bootstrap has completed successfully.")
 
     def update(self) -> None:
@@ -80,3 +97,12 @@ class Bootstrap(LoggingSupport, KX_PythonComponent):
         if self.context:
             self.context.unwire()
             self.context.shutdown_resources()
+
+    @staticmethod
+    def on_ready(callback: Initializer) -> None:
+        not_empty(callback)
+
+        if _initialized:
+            callback()
+        else:
+            _initializers.append(callback)

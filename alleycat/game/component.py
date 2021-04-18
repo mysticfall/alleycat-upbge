@@ -12,6 +12,7 @@ from validator_collection import not_empty
 
 from alleycat.common import ArgumentReader, IllegalStateError, Initializable
 from alleycat.event import ComponentLoopSupport
+from alleycat.game import Bootstrap
 from alleycat.log import LoggingSupport
 
 T = TypeVar("T", bound=KX_GameObject)
@@ -63,7 +64,7 @@ class BaseComponent(Generic[T], ComponentLoopSupport, Initializable, LoggingSupp
         def process_init(start_args: Mapping[str, Any]):
             self.logger.info("Initialising with parameters: %s", start_args)
 
-            return self.initialize()
+            return Bootstrap.on_ready(self.initialize)
 
         self._params = self.init_params(ArgumentReader(args))
         self._params.map(process_init).alt(self.logger.error)
@@ -85,7 +86,7 @@ class BaseComponent(Generic[T], ComponentLoopSupport, Initializable, LoggingSupp
 
     @property
     def valid(self) -> bool:
-        return is_successful(self._params)
+        return self.initialized and is_successful(self._params)
 
     def activate(self, value: bool = True) -> None:
         # noinspection PyTypeChecker
