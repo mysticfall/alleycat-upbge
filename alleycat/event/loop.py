@@ -44,5 +44,6 @@ class ComponentLoopSupport(EventLoopAware, KX_PythonComponent, ABC):
 
     def dispose(self) -> None:
         self._on_process.on_completed()
+        self._on_process.dispose()
 
         super().dispose()
