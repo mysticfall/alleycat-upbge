@@ -29,27 +29,6 @@
           }
         }
       },
-      "move": {
-        "type": "axis2d",
-        "name": "Move",
-        "description": "Move the camera.",
-        "input": {
-          "x": {
-            "type": "key_axis",
-            "positive_key": "AKEY",
-            "negative_key": "DKEY",
-            "sensitivity": 1
-          },
-          "y": {
-            "type": "key_axis",
-            "positive_key": "WKEY",
-            "negative_key": "SKEY",
-            "window_size": 1,
-            "window_shift": 0.05,
-            "sensitivity": 1
-          }
-        }
-      },
       "zoom": {
         "type": "axis",
         "name": "Zoom",
@@ -57,6 +36,27 @@
         "input": {
           "type": "mouse_wheel",
           "sensitivity": 5
+        }
+      }
+    },
+    "move": {
+      "type": "axis2d",
+      "name": "Move",
+      "description": "Move the character.",
+      "input": {
+        "x": {
+          "type": "key_axis",
+          "positive_key": "AKEY",
+          "negative_key": "DKEY",
+          "sensitivity": 1
+        },
+        "y": {
+          "type": "key_axis",
+          "positive_key": "WKEY",
+          "negative_key": "SKEY",
+          "window_size": 1,
+          "window_shift": 0.05,
+          "sensitivity": 1
         }
       }
     }

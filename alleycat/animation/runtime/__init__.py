@@ -1,2 +1,2 @@
 from .animator import GameObjectAnimator
-from .graph import AnimationGraph
+from .graph import AnimationGraph, Animating

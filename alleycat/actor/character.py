@@ -1,68 +1,18 @@
 from collections import OrderedDict
-from math import radians
+from itertools import chain
 
-import bge
-from alleycat.reactive import ReactiveObject
-from bge.types import KX_GameObject, KX_PythonComponent, KX_Scene
-from bpy.types import Object
-from dependency_injector.wiring import Provide
-from mathutils import Vector
-from numpy import sign
+from bge.types import KX_GameObject
 
-from alleycat.camera import CameraManager
-from alleycat.event import EventLoopScheduler
-from alleycat.game import GameContext
-from alleycat.input import InputMap
-from alleycat.log import LoggingSupport
+from alleycat.actor import Mobile, Sighted
+from alleycat.animation.runtime import Animating
+from alleycat.game import Entity
 
 
-class Character(LoggingSupport, ReactiveObject, KX_PythonComponent):
-    args = OrderedDict((
-        ("name", "Player"),
-        ("camera", Object),
-    ))
+class Character(Sighted, Mobile, Animating, Entity):
+    args = OrderedDict(chain(Entity.args.items(), Animating.args.items()))
 
-    input_map: InputMap = Provide[GameContext.input.mappings]
-
-    scheduler: EventLoopScheduler = Provide[GameContext.scheduler]
-
-    _last_pos: Vector
-
-    # noinspection PyUnusedLocal
     def __init__(self, obj: KX_GameObject):
-        super().__init__()
+        super().__init__(obj)
 
-    def start(self, args: dict) -> None:
-        self.name = args["name"]
-
-        scene: KX_Scene = bge.logic.getCurrentScene()
-        manager: KX_GameObject = scene.getGameObjectFromObject(args["camera"])
-
-        for comp in manager.components:
-            if isinstance(comp, CameraManager):
-                self.manager = comp
-                break
-
-        self._last_pos = self.object.worldPosition.copy()
-
-        self.logger.info("Input map: %s", self.input_map)
-        self.logger.info("Camera Manager: %s", manager)
-
-    def update(self) -> None:
-        pos = self.object.worldPosition.copy()
-
-        if not self.manager.valid:
-            return
-
-        view = self.manager.active_camera
-
-        if not view:
-            return
-
-        if (pos - self._last_pos).length_squared > 0.0001:
-            angle = sign(view.yaw) * min(radians(5), abs(view.yaw))
-
-            view.yaw -= angle
-            self.object.parent.applyRotation(Vector((0, 0, -angle)), True)
-
-        self._last_pos = pos
+    def process(self) -> None:
+        pass

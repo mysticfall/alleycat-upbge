@@ -1,25 +1,23 @@
-from collections import OrderedDict
 from functools import cached_property
 from itertools import chain
-from typing import Callable, Final, Mapping, NamedTuple, Sequence, Type
+from typing import Mapping, NamedTuple, Sequence
 
 import rx
 from alleycat.reactive import RV, functions as rv
 from bge.types import KX_GameObject
 from dependency_injector.wiring import Provide
-from mathutils import Vector
 from returns.curry import partial
 from returns.iterables import Fold
 from returns.maybe import Maybe, Nothing, Some
 from returns.result import ResultE, Success, safe
-from rx import Observable, operators as ops
+from rx import operators as ops
 from rx.subject import Subject
 from validator_collection import iterable
 
-from alleycat.camera import CameraControl, FirstPersonCamera, RotatableCamera, ThirdPersonCamera, ZoomableCamera
-from alleycat.common import ArgumentReader, of_type
+from alleycat.camera import CameraControl, FirstPersonCamera, ThirdPersonCamera
+from alleycat.common import ArgumentReader
 from alleycat.game import BaseComponent, GameContext
-from alleycat.input import Axis2DBinding, AxisBinding, InputMap
+from alleycat.input import InputMap
 
 
 class CameraState(NamedTuple):
@@ -28,15 +26,6 @@ class CameraState(NamedTuple):
 
 
 class CameraManager(BaseComponent[KX_GameObject]):
-    class ArgKeys(BaseComponent.ArgKeys):
-        ROTATION_INPUT: Final = "Rotation Input"
-        ZOOM_INPUT: Final = "Zoom Input"
-
-    args = OrderedDict(chain(BaseComponent.args.items(), (
-        (ArgKeys.ROTATION_INPUT, "view/rotate"),
-        (ArgKeys.ZOOM_INPUT, "view/zoom")
-    )))
-
     active_camera: RV[CameraControl] = rv.new_view()
 
     input_map: InputMap = Provide[GameContext.input.mappings]
@@ -49,14 +38,6 @@ class CameraManager(BaseComponent[KX_GameObject]):
     @property
     def cameras(self) -> Sequence[CameraControl]:
         return self.params["cameras"]
-
-    @property
-    def rotation_input(self) -> Axis2DBinding:
-        return self.params["rotation_input"]
-
-    @property
-    def zoom_input(self) -> AxisBinding:
-        return self.params["zoom_input"]
 
     @cached_property
     def first_person_camera(self) -> Maybe[FirstPersonCamera]:
@@ -72,23 +53,9 @@ class CameraManager(BaseComponent[KX_GameObject]):
             .bind(safe(lambda c: tuple(iterable(c)))) \
             .alt(lambda _: ValueError("No camera control found."))
 
-        # noinspection PyTypeChecker
-        rotation_input = args \
-            .require(CameraManager.ArgKeys.ROTATION_INPUT, str) \
-            .bind(self.input_map.require_binding) \
-            .bind(safe(lambda b: of_type(b, Axis2DBinding)))
-
-        # noinspection PyTypeChecker
-        zoom_input = args \
-            .require(CameraManager.ArgKeys.ZOOM_INPUT, str) \
-            .bind(self.input_map.require_binding) \
-            .bind(safe(lambda b: of_type(b, AxisBinding)))
-
         result = Fold.collect((
             cameras.map(lambda c: ("cameras", c)),
-            rotation_input.map(lambda i: ("rotation_input", i)),
-            zoom_input.map(lambda i: ("zoom_input", i))
-        ), Success(())).map(chain).map(dict)
+        ), Success(())).map(chain).map(dict)  # type:ignore
 
         inherited = super().init_params(args)
 
@@ -114,55 +81,6 @@ class CameraManager(BaseComponent[KX_GameObject]):
             ops.map(lambda states: next(s.camera for s in states if s.active)),
             ops.distinct_until_changed(),
             ops.do_action(lambda c: self.logger.info("Switching camera mode to %s.", c)))
-
-        active_camera = rv.observe(self.active_camera)
-
-        def rotate(control: RotatableCamera, value: Vector):
-            control.pitch += value.y
-            control.yaw += value.x
-
-        def zoom(control: ZoomableCamera, value: float):
-            control.distance = max(control.distance - value * 0.1, 0)
-
-        def setup_input(events: Observable, valid_type: Type, handler: Callable):
-            active_camera.pipe(
-                ops.filter(lambda c: isinstance(c, valid_type)),
-                ops.map(lambda c: events.pipe(ops.map(lambda v: (c, v)))),
-                ops.switch_latest(),
-                ops.filter(lambda _: self.active),
-                ops.take_until(self.on_dispose)
-            ).subscribe(lambda v: handler(*v), on_error=self.error_handler)
-
-        def setup_switcher(events: Observable):
-            first_person_camera = active_camera.pipe(ops.filter(lambda c: isinstance(c, FirstPersonCamera)))
-            third_person_camera = active_camera.pipe(ops.filter(lambda c: isinstance(c, ThirdPersonCamera)))
-
-            first_person_camera.pipe(
-                ops.map(lambda c: events.pipe(
-                    ops.filter(lambda v: v < 0),
-                    ops.take(1)
-                )),
-                ops.switch_latest(),
-                ops.filter(lambda _: self.active),
-                ops.take_until(self.on_dispose)
-            ).subscribe(lambda _: self.switch_to_3rd_person(), on_error=self.error_handler)
-
-            third_person_camera.pipe(
-                ops.map(lambda c: rv.observe(c.distance).pipe(
-                    ops.filter(lambda v: v == 0),
-                    ops.take(1))),
-                ops.switch_latest(),
-                ops.filter(lambda _: self.active),
-                ops.take_until(self.on_dispose),
-            ).subscribe(lambda _: self.switch_to_1st_person(), on_error=self.error_handler)
-
-        on_rotate = rv.observe(self.rotation_input.value)
-        on_zoom = rv.observe(self.zoom_input.value)
-
-        setup_input(on_rotate, RotatableCamera, rotate)
-        setup_input(on_zoom, ZoomableCamera, zoom)
-
-        setup_switcher(on_zoom)
 
     def switch_to_1st_person(self) -> None:
         self.first_person_camera.map(lambda c: c.activate())

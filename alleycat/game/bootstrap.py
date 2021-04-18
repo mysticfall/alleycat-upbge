@@ -71,6 +71,7 @@ class Bootstrap(LoggingSupport, KX_PythonComponent):
 
         self.context.wire(modules=[
             sys.modules["alleycat.actor.character"],
+            sys.modules["alleycat.actor.control"],
             sys.modules["alleycat.animation.runtime.graph"],
             sys.modules["alleycat.camera.manager"]])
 
