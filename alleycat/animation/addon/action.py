@@ -22,8 +22,6 @@ class PlayActionNode(AnimationNode):
 
     _result: Maybe[AnimationResult] = Nothing
 
-    _last_offset: Optional[Vector] = None
-
     # noinspection PyUnusedLocal
     def init(self, context: Optional[Context]) -> None:
         self.inputs.new(NodeSocketFloat0To1.bl_idname, "Speed")
@@ -51,6 +49,14 @@ class PlayActionNode(AnimationNode):
     @last_frame.setter
     def last_frame(self, value: int) -> None:
         self.attrs["last_frame"] = validators.float(value, minimum=0.0)
+
+    @property
+    def last_offset(self) -> Vector:
+        return self.attrs["last_offset"] if "last_offset" in self.attrs else Vector((0, 0, 0))
+
+    @last_offset.setter
+    def last_offset(self, value: Vector) -> None:
+        self.attrs["last_offset"] = value
 
     def insert_link(self, link: NodeLink) -> None:
         assert link
@@ -80,10 +86,8 @@ class PlayActionNode(AnimationNode):
         fps = 24.0
         total = self.action.frame_range[-1]
 
-        start_frame = self.last_frame if self.last_frame < total and animator.weight < 1 else 0
+        start_frame = self.last_frame
         end_frame = min(start_frame + animator.time_delta * fps, total)
-
-        self.last_frame = end_frame
 
         group = self.action.groups.get("root")
 
@@ -93,13 +97,14 @@ class PlayActionNode(AnimationNode):
             channel = group.channels[i]
             offset[channel.array_index] = channel.evaluate(start_frame)
 
-        if self._last_offset:
-            delta = self._last_offset - offset
+        result.offset = offset - self.last_offset
 
-            if delta.length_squared < 0.001:
-                result.offset = delta
-
-        self._last_offset = offset
+        if end_frame >= total:
+            self.last_frame = 0
+            self.last_offset = Vector((0, 0, 0))
+        else:
+            self.last_frame = end_frame
+            self.last_offset = offset
 
         animator.play(self.action, start_frame=start_frame, end_frame=end_frame, play_mode=PlayMode.Play)
 
