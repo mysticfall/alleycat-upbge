@@ -26,9 +26,11 @@ from alleycat.input import InputMap
 class AnimationGraph(BaseComponent[KX_GameObject]):
     class ArgKeys(BaseComponent.ArgKeys):
         ANIMATION_TREE: Final = "Animation Tree"
+        ROOT_BONE: Final = "Root Bone"
 
     args = OrderedDict(chain(BaseComponent.args.items(), (
         (ArgKeys.ANIMATION_TREE, NodeTree),
+        (ArgKeys.ROOT_BONE, ""),
     )))
 
     input_map: InputMap = Provide[GameContext.input.mappings]
@@ -44,7 +46,9 @@ class AnimationGraph(BaseComponent[KX_GameObject]):
 
     @cached_property
     def animator(self) -> Animator:
-        return GameObjectAnimator(self.object)
+        root_bone = self.params["root_bone"].value_or(None)
+
+        return GameObjectAnimator(self.object, root_bone=root_bone)
 
     @property
     def tree(self) -> AnimationNodeTree:
@@ -56,9 +60,13 @@ class AnimationGraph(BaseComponent[KX_GameObject]):
 
     def init_params(self, args: ArgumentReader) -> ResultE[Mapping]:
         tree = args.require(AnimationGraph.ArgKeys.ANIMATION_TREE, NodeTree)
+        root_bone = args.read(AnimationGraph.ArgKeys.ROOT_BONE, str) \
+            .map(str.strip) \
+            .bind(lambda s: Some(s) if len(s) > 0 else Nothing)
 
         result = Fold.collect((
             tree.map(lambda t: ("tree", t)),
+            Success(("root_bone", root_bone)),
         ), Success(())).map(chain).map(dict)
 
         inherited = super().init_params(args)

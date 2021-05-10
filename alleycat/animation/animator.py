@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Optional
 
+import bpy
 from bpy.types import Action
 from returns.maybe import Maybe
 from validator_collection import validators
@@ -27,13 +28,20 @@ class BlendMode(Enum):
 
 
 class Animator(ABC):
-    __slots__ = ["_time_delta", "_layer", "_weight", "_speed"]
+    __slots__ = ["_time_delta", "_layer", "_weight", "_speed", "_root_bone"]
 
-    def __init__(self, time_delta: float = 0, layer: int = 0, weight: float = 1.0) -> None:
+    def __init__(
+            self,
+            time_delta: float = 0,
+            layer: int = 0,
+            weight: float = 1.0,
+            root_bone: Optional[str] = None) -> None:
         self.time_delta = time_delta
         self.layer = layer
         self.weight = weight
+
         self._speed = 1.0
+        self._root_bone = Maybe.from_optional(root_bone)
 
     @property
     def time_delta(self) -> float:
@@ -62,6 +70,14 @@ class Animator(ABC):
     @property
     def speed(self) -> float:
         return self._speed
+
+    @property
+    def root_bone(self) -> Maybe[str]:
+        return self._root_bone
+
+    @property
+    def fps(self) -> float:
+        return bpy.context.scene.render.fps
 
     @abstractmethod
     def play(self,

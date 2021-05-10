@@ -12,10 +12,16 @@ from alleycat.animation import Animator, BlendMode, PlayMode
 class GameObjectAnimator(Animator):
     __slots__ = ["_target"]
 
-    def __init__(self, target: KX_GameObject, time_delta: float = 0, layer: int = 10000) -> None:
+    def __init__(
+            self,
+            target: KX_GameObject,
+            time_delta: float = 0,
+            layer: int = 10000,
+            weight: float = 1.0,
+            root_bone: Optional[str] = None) -> None:
         self._target = not_empty(target)
 
-        super().__init__(time_delta, layer)
+        super().__init__(time_delta, layer, weight, root_bone)
 
     @property
     def target(self) -> KX_GameObject:

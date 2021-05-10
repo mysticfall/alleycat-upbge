@@ -83,28 +83,27 @@ class PlayActionNode(AnimationNode):
         if not self.action:
             return Nothing
 
-        fps = 24.0
         total = self.action.frame_range[-1]
 
         start_frame = self.last_frame
-        end_frame = min(start_frame + animator.time_delta * fps, total)
+        end_frame = min(start_frame + animator.time_delta * animator.fps, total)
 
-        group = self.action.groups.get("root")
+        reset = end_frame >= total
 
-        offset = Vector((0, 0, 0))
+        self.last_frame = 0 if reset else end_frame
 
-        for i in range(3):
-            channel = group.channels[i]
-            offset[channel.array_index] = channel.evaluate(start_frame)
+        if animator.root_bone != Nothing:
+            group = self.action.groups.get(animator.root_bone.unwrap())
 
-        result.offset = offset - self.last_offset
+            offset = Vector((0, 0, 0))
 
-        if end_frame >= total:
-            self.last_frame = 0
-            self.last_offset = Vector((0, 0, 0))
-        else:
-            self.last_frame = end_frame
-            self.last_offset = offset
+            for i in range(3):
+                channel = group.channels[i]
+                offset[channel.array_index] = channel.evaluate(start_frame)
+
+            result.offset = offset - self.last_offset
+
+            self.last_offset = Vector((0, 0, 0)) if reset else offset
 
         animator.play(self.action, start_frame=start_frame, end_frame=end_frame, play_mode=PlayMode.Play)
 
