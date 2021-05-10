@@ -1,3 +1,6 @@
+from collections import OrderedDict
+from itertools import chain
+
 from bge.types import KX_Camera
 from mathutils import Vector
 from mathutils.geometry import distance_point_to_plane
@@ -6,6 +9,8 @@ from alleycat.camera import RotatableCamera, ZoomableCamera
 
 
 class ThirdPersonCamera(RotatableCamera, ZoomableCamera):
+
+    args = OrderedDict(chain(RotatableCamera.args.items(), ZoomableCamera.args.items()))
 
     def __init__(self, obj: KX_Camera) -> None:
         super().__init__(obj)

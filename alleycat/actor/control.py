@@ -152,7 +152,7 @@ class CharacterControl(BaseComponent[KX_GameObject]):
 
             third_person_camera.pipe(
                 ops.map(lambda c: rv.observe(c.distance).pipe(
-                    ops.filter(lambda v: v == 0),
+                    ops.filter(lambda v: v <= c.min_distance),
                     ops.take(1))),
                 ops.switch_latest(),
                 ops.filter(lambda _: self.active),
