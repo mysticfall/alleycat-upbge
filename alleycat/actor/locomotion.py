@@ -6,8 +6,9 @@ from typing import Final, Mapping
 from alleycat.reactive import RP, functions as rv
 from bge.types import KX_GameObject
 from dependency_injector.wiring import inject
-from mathutils import Vector
+from mathutils import Matrix, Vector
 from returns.iterables import Fold
+from returns.maybe import Maybe
 from returns.result import ResultE, Success, safe
 
 from alleycat.animation import AnimationResult
@@ -56,6 +57,10 @@ class RootMotionLocomotion(Locomotion):
         return self.params["animation_graph"]
 
     @property
+    def root_bone_mat(self) -> Maybe[Matrix]:
+        return self.params["root_bone_mat"]
+
+    @property
     def mixer(self) -> MixAnimationNode:
         return self.params["mixer"]
 
@@ -63,6 +68,9 @@ class RootMotionLocomotion(Locomotion):
     def init_params(self, args: ArgumentReader) -> ResultE[Mapping]:
         animation_graph = require_component(self.object, Animating) \
             .map(lambda a: a.animation_graph)
+
+        root_bone_mat = animation_graph \
+            .map(lambda a: a.root_channel.map(lambda c: c.bone.bone_mat))
 
         mixer_key = args.read(RootMotionLocomotion.ArgKeys.MIXER, str).value_or("Mix")
 
@@ -77,6 +85,7 @@ class RootMotionLocomotion(Locomotion):
 
         result = Fold.collect((
             animation_graph.map(lambda a: ("animation_graph", a)),
+            root_bone_mat.map(lambda b: ("root_bone_mat", b)),
             mixer.map(lambda m: ("mixer", m)),
         ), Success(())).map(chain).map(dict)
 
@@ -88,11 +97,10 @@ class RootMotionLocomotion(Locomotion):
         super().initialize()
 
         def process_result(result: AnimationResult) -> None:
-            # noinspection PyUnresolvedReferences
-            rm = result.offset
-            rm.z = 0
+            mat = self.root_bone_mat.or_else_call(lambda: Matrix.Identity(3)).inverted()
 
-            self.object.applyMovement(rm, True)
+            # noinspection PyUnresolvedReferences
+            self.object.applyMovement(result.offset @ mat, True)
 
         self.animation_graph.on_advance \
             .subscribe(lambda r: r.map(process_result).value_or(None), on_error=self.error_handler)

@@ -5,7 +5,7 @@ from functools import cached_property
 from itertools import chain
 from typing import Final, Mapping
 
-from bge.types import KX_GameObject
+from bge.types import BL_ArmatureChannel, BL_ArmatureObject, KX_GameObject
 from bpy.types import NodeTree, Object
 from dependency_injector.wiring import Provide
 from returns.iterables import Fold
@@ -23,7 +23,7 @@ from alleycat.game import BaseComponent, GameContext, require_component
 from alleycat.input import InputMap
 
 
-class AnimationGraph(BaseComponent[KX_GameObject]):
+class AnimationGraph(BaseComponent[BL_ArmatureObject]):
     class ArgKeys(BaseComponent.ArgKeys):
         ANIMATION_TREE: Final = "Animation Tree"
         ROOT_BONE: Final = "Root Bone"
@@ -49,6 +49,12 @@ class AnimationGraph(BaseComponent[KX_GameObject]):
         root_bone = self.params["root_bone"].value_or(None)
 
         return GameObjectAnimator(self.object, root_bone=root_bone)
+
+    @cached_property
+    def root_channel(self) -> Maybe[BL_ArmatureChannel]:
+        return self.params["root_bone"] \
+            .map(lambda b: self.object.channels[b]) \
+            .bind(Maybe.from_optional)
 
     @property
     def tree(self) -> AnimationNodeTree:
