@@ -2,12 +2,15 @@ from abc import ABC
 from collections import OrderedDict
 from typing import Any, Final, Generic, Mapping, Type, TypeVar
 
+import rx
 from alleycat.reactive import RP, functions as rv
 from bge.types import KX_GameObject, KX_PythonComponent
 from bpy.types import ID, Object
+from returns.functions import identity
 from returns.maybe import Maybe, Nothing
 from returns.pipeline import is_successful
 from returns.result import Result, ResultE, Success
+from rx import operators as ops
 from validator_collection import not_empty
 
 from alleycat.common import ArgumentReader, IllegalStateError, Initializable
@@ -59,12 +62,25 @@ class BaseComponent(Generic[T], ComponentLoopSupport, Initializable, LoggingSupp
         super().__init__(obj)
 
     def start(self, args: dict) -> None:
-        self.logger.debug("Starting with arguments: %s", args)
+        self.logger.info("Starting with arguments: %s", args)
 
         def process_init(start_args: Mapping[str, Any]):
-            self.logger.info("Initialising with parameters: %s", start_args)
+            self.logger.info("Validated parameters: %s", start_args)
 
-            return Bootstrap.on_ready(self.initialize)
+            dependencies = filter(lambda p: isinstance(p, Initializable), start_args.values())
+
+            when_game_is_ready = (rx.from_callback(Bootstrap.on_ready, lambda _: True)(),)
+            when_deps_are_ready = tuple(map(lambda i: rv.observe(i.initialized), dependencies))
+
+            self.logger.debug("Waiting for components: %s", tuple(when_deps_are_ready))
+
+            when_ready = rx.combine_latest(*(when_game_is_ready + when_deps_are_ready)).pipe(
+                ops.map(all),
+                ops.filter(identity),
+                ops.take(1),
+                ops.take_until(self.on_dispose))
+
+            when_ready.subscribe(lambda _: self.initialize(), on_error=self.error_handler)
 
         self._params = self.init_params(ArgumentReader(args))
         self._params.map(process_init).alt(self.logger.error)
@@ -80,6 +96,8 @@ class BaseComponent(Generic[T], ComponentLoopSupport, Initializable, LoggingSupp
         return Success(dict((("active", active),)))
 
     def initialize(self) -> None:
+        self.logger.info("Initializing component.")
+
         super().initialize()
 
         self.active = self.params["active"]

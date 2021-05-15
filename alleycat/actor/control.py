@@ -110,8 +110,7 @@ class CharacterControl(BaseComponent[KX_GameObject]):
         super().initialize()
 
         def move(value: Vector):
-            if self.character.initialized and self.character.locomotion.initialized:
-                self.character.locomotion.movement = value
+            self.character.locomotion.movement = value
 
         rv \
             .observe(self.movement_input.value) \
