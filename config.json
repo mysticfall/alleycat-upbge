@@ -91,5 +91,19 @@
         "formatter": "simple"
       }
     }
+  },
+  "dependency-injection": {
+    "modules": [
+      "alleycat.actor.character",
+      "alleycat.actor.control",
+      "alleycat.animation.runtime.graph",
+      "alleycat.camera.manager",
+      "alleycat.physics.ragdoll",
+      "alleycat.actor.character",
+      "alleycat.actor.control",
+      "alleycat.animation.runtime.graph",
+      "alleycat.camera.manager",
+      "alleycat.physics.ragdoll"
+    ]
   }
 }

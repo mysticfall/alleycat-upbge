@@ -2,9 +2,10 @@ import json
 import logging
 import sys
 from collections import OrderedDict
+from importlib import import_module
 from logging.config import fileConfig
 from pathlib import Path
-from typing import Callable, List
+from typing import Callable, List, Sequence
 
 from bge.types import KX_GameObject, KX_PythonComponent
 from bpy.path import abspath
@@ -46,6 +47,8 @@ class Bootstrap(LoggingSupport, KX_PythonComponent):
 
         print(f"Loading configuration from {config_file}.")
 
+        injection_targets: Sequence[str] = ()
+
         if config_file.exists():
             with open(config_file) as f:
                 config = json.load(f)
@@ -58,6 +61,11 @@ class Bootstrap(LoggingSupport, KX_PythonComponent):
 
                     logging.config.dictConfig(logging_conf)
 
+                if "dependency-injection" in config:
+                    di_config = config["dependency-injection"]
+
+                    injection_targets = di_config["modules"] if "modules" in di_config else ()
+
         def except_hook(tpe, value, traceback):
             if tpe != KeyboardInterrupt:
                 self.logger.exception("Unhandled error occurred:", exc_info=value, stack_info=traceback)
@@ -69,13 +77,10 @@ class Bootstrap(LoggingSupport, KX_PythonComponent):
         # noinspection SpellCheckingInspection
         sys.excepthook = except_hook
 
-        self.context.wire(modules=[
-            sys.modules["alleycat.actor.character"],
-            sys.modules["alleycat.actor.control"],
-            sys.modules["alleycat.animation.runtime.graph"],
-            sys.modules["alleycat.camera.manager"],
-            sys.modules["alleycat.physics.ragdoll"]
-        ])
+        if len(injection_targets) > 0:
+            self.logger.info("Injecting dependencies to modules: %s", injection_targets)
+
+            self.context.wire(modules=tuple(map(import_module, injection_targets)))
 
         for callback in _initializers:
             try:
