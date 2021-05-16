@@ -25,7 +25,7 @@ class CollisionEvent:
     __slots__ = ["object", "point", "normal"]
 
 
-class Collider(BaseComponent[KX_GameObject], ABC):
+class Collider(BaseComponent[KX_GameObject]):
 
     def __init__(self, obj: KX_GameObject) -> None:
         super().__init__(obj)
