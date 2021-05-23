@@ -5,7 +5,7 @@ from typing import Optional
 import bpy
 from bpy.types import Action
 from returns.maybe import Maybe
-from validator_collection import validators
+from validator_collection import not_empty, validators
 
 
 class PlayMode(Enum):
@@ -28,17 +28,36 @@ class BlendMode(Enum):
 
 
 class Animator(ABC):
-    __slots__ = ["_time_delta", "_layer", "_weight", "_speed", "_root_bone"]
+    __slots__ = [
+        "_time_delta",
+        "_layer",
+        "_weight",
+        "_speed",
+        "_priority",
+        "_blend",
+        "_play_mode",
+        "_blend_mode",
+        "_root_bone"]
 
     def __init__(
             self,
             time_delta: float = 0,
             layer: int = 0,
             weight: float = 1.0,
+            speed: float = 1.0,
+            priority: float = 0,
+            blend: float = 0.0,
+            play_mode: PlayMode = PlayMode.Play,
+            blend_mode: BlendMode = BlendMode.Blend,
             root_bone: Optional[str] = None) -> None:
         self.time_delta = time_delta
         self.layer = layer
         self.weight = weight
+        self.speed = speed
+        self.priority = priority
+        self.blend = blend
+        self.play_mode = play_mode
+        self.blend_mode = blend_mode
 
         self._speed = 1.0
         self._root_bone = Maybe.from_optional(root_bone)
@@ -71,6 +90,42 @@ class Animator(ABC):
     def speed(self) -> float:
         return self._speed
 
+    @speed.setter
+    def speed(self, value: float) -> None:
+        self._speed = value
+
+    @property
+    def priority(self) -> int:
+        return self._priority
+
+    @priority.setter
+    def priority(self, value: int) -> None:
+        self._priority = validators.integer(value, minimum=0)
+
+    @property
+    def blend(self) -> float:
+        return self._blend
+
+    @blend.setter
+    def blend(self, value: float) -> None:
+        self._blend = validators.float(value, minimum=0.0, maximum=1.0)
+
+    @property
+    def play_mode(self) -> PlayMode:
+        return self._play_mode
+
+    @play_mode.setter
+    def play_mode(self, value: PlayMode) -> None:
+        self._play_mode = not_empty(value)
+
+    @property
+    def blend_mode(self) -> BlendMode:
+        return self._blend_mode
+
+    @blend_mode.setter
+    def blend_mode(self, value: BlendMode) -> None:
+        self._blend_mode = not_empty(value)
+
     @property
     def root_bone(self) -> Maybe[str]:
         return self._root_bone
@@ -83,11 +138,7 @@ class Animator(ABC):
     def play(self,
              action: Action,
              start_frame: Optional[float] = None,
-             end_frame: Optional[float] = None,
-             priority=0,
-             blend: float = 0,
-             play_mode: PlayMode = PlayMode.Play,
-             blend_mode: BlendMode = BlendMode.Blend) -> None:
+             end_frame: Optional[float] = None) -> None:
         pass
 
     @abstractmethod

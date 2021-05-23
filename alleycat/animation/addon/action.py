@@ -6,7 +6,7 @@ from mathutils import Vector
 from returns.maybe import Maybe, Nothing, Some
 from validator_collection import validators
 
-from alleycat.animation import AnimationResult, Animator, PlayMode
+from alleycat.animation import AnimationResult, Animator
 from alleycat.animation.addon import AnimationNode, NodeSocketAnimation
 from alleycat.nodetree import NodeSocketFloat, NodeSocketFloat0, NodeSocketFloat0To1
 
@@ -105,6 +105,6 @@ class PlayActionNode(AnimationNode):
 
             self.last_offset = Vector((0, 0, 0)) if reset else offset
 
-        animator.play(self.action, start_frame=start_frame, end_frame=end_frame, play_mode=PlayMode.Play)
+        animator.play(self.action, start_frame=start_frame, end_frame=end_frame)
 
         return self._result
