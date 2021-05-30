@@ -1,6 +1,6 @@
 from typing import Optional
 
-from bpy.props import PointerProperty
+from bpy.props import BoolProperty, PointerProperty
 from bpy.types import Action, Context, NodeLink, UILayout
 from mathutils import Vector
 from returns.maybe import Maybe, Nothing, Some
@@ -19,6 +19,8 @@ class PlayActionNode(AnimationNode):
     bl_icon: str = "ACTION"
 
     action: PointerProperty(name="Action", type=Action, options={"LIBRARY_EDITABLE"})  # type:ignore
+
+    root_motion: BoolProperty(name="Root Motion", options={"LIBRARY_EDITABLE"})  # type:ignore
 
     _result: Maybe[AnimationResult] = Nothing
 
@@ -71,6 +73,7 @@ class PlayActionNode(AnimationNode):
         assert layout
 
         layout.prop(self, "action")
+        layout.prop(self, "root_motion")
 
     def advance(self, animator: Animator) -> Maybe[AnimationResult]:
         if self._result == Nothing:
@@ -92,7 +95,7 @@ class PlayActionNode(AnimationNode):
 
         self.last_frame = 0 if reset else end_frame
 
-        if animator.root_bone != Nothing:
+        if self.root_motion and animator.root_bone != Nothing:
             group = self.action.groups.get(animator.root_bone.unwrap())
 
             offset = Vector((0, 0, 0))
