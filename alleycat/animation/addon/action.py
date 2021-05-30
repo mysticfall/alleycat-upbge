@@ -1,6 +1,6 @@
 from typing import Optional
 
-from bpy.props import BoolProperty, PointerProperty
+from bpy.props import BoolProperty, EnumProperty, PointerProperty
 from bpy.types import Action, Context, NodeLink, UILayout
 from mathutils import Vector
 from returns.maybe import Maybe, Nothing, Some
@@ -18,7 +18,16 @@ class PlayActionNode(AnimationNode):
 
     bl_icon: str = "ACTION"
 
+    active: BoolProperty(name="Active", default=True, options={"LIBRARY_EDITABLE"})  # type:ignore
+
     action: PointerProperty(name="Action", type=Action, options={"LIBRARY_EDITABLE"})  # type:ignore
+
+    # noinspection PyTypeChecker
+    mode: EnumProperty(  # type:ignore
+        name="Mode",
+        default="loop",
+        items=[("play", "Play", ""), ("loop", "Loop", "")],
+        options={"LIBRARY_EDITABLE"})
 
     root_motion: BoolProperty(name="Root Motion", options={"LIBRARY_EDITABLE"})  # type:ignore
 
@@ -72,7 +81,9 @@ class PlayActionNode(AnimationNode):
         assert context
         assert layout
 
+        layout.prop(self, "active")
         layout.prop(self, "action")
+        layout.prop(self, "mode")
         layout.prop(self, "root_motion")
 
     def advance(self, animator: Animator) -> Maybe[AnimationResult]:
@@ -83,7 +94,7 @@ class PlayActionNode(AnimationNode):
             result = self._result.unwrap()
             result.reset()
 
-        if not self.action:
+        if not self.action or not self.active:
             return Nothing
 
         total = self.action.frame_range[-1]
@@ -92,6 +103,9 @@ class PlayActionNode(AnimationNode):
         end_frame = min(start_frame + animator.time_delta * animator.fps, total)
 
         reset = end_frame >= total
+
+        if reset and self.mode != "loop":
+            self.active = False
 
         self.last_frame = 0 if reset else end_frame
 
