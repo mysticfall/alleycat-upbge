@@ -45,7 +45,7 @@ class Animator(ABC):
             layer: int = 0,
             weight: float = 1.0,
             speed: float = 1.0,
-            priority: float = 0,
+            priority: int = 0,
             blend: float = 0.0,
             play_mode: PlayMode = PlayMode.Play,
             blend_mode: BlendMode = BlendMode.Blend,

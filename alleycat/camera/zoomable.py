@@ -34,7 +34,7 @@ class ZoomableCamera(CameraControl, ABC):
 
         result = Fold.collect((
             Success(("min_distance", min_distance)),
-        ), Success(())).map(chain).map(dict)
+        ), Success(())).map(chain).map(dict)  # type:ignore
 
         inherited = super().init_params(args)
 
