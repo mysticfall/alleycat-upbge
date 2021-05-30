@@ -1,10 +1,11 @@
 from typing import Optional, cast
 
-from bpy.types import Context, NodeLink, NodeSocket
+from bpy.props import EnumProperty
+from bpy.types import Context, NodeLink, NodeSocket, UILayout
 from returns.maybe import Maybe, Nothing
 from validator_collection import not_empty
 
-from alleycat.animation import AnimationResult, Animator
+from alleycat.animation import AnimationResult, Animator, BlendMode
 from alleycat.animation.addon import AnimationNode, NodeSocketAnimation
 from alleycat.nodetree import NodeSocketFloat, NodeSocketFloat0To1
 
@@ -15,6 +16,11 @@ class MixAnimationNode(AnimationNode):
     bl_label: str = "Mix"
 
     bl_icon: str = "ACTION"
+
+    blend_mode: EnumProperty(
+        name="Blend Mode",
+        items=[("blend", "Blend", ""), ("add", "Add", "")],  # type:ignore
+        options={"LIBRARY_EDITABLE"})
 
     _result: Optional[AnimationResult] = None
 
@@ -81,6 +87,12 @@ class MixAnimationNode(AnimationNode):
         else:
             link.is_valid = False
 
+    def draw_buttons(self, context: Context, layout: UILayout) -> None:
+        assert context
+        assert layout
+
+        layout.prop(self, "blend_mode")
+
     def advance(self, animator: Animator) -> Maybe[AnimationResult]:
         return self.input1.bind(lambda i1: self.input2.bind(lambda i2: self.process(i1, i2, animator)))
 
@@ -96,6 +108,7 @@ class MixAnimationNode(AnimationNode):
             self._result = AnimationResult()
 
         animator.weight = self.mix
+        animator.blend_mode = BlendMode.Add if self.blend_mode == "add" else BlendMode.Blend
 
         result1 = input1.advance(animator)
 
