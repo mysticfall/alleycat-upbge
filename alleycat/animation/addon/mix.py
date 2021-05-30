@@ -120,7 +120,8 @@ class MixAnimationNode(AnimationNode):
         return result1.bind(lambda r1: result2.map(lambda r2: self._merge_result(r1, r2)))
 
     def _merge_result(self, r1: AnimationResult, r2: AnimationResult) -> AnimationResult:
-        result = r1.copy(self._result)
+        result = self._result.copy(r1)
+
         result.offset = r1.offset * (1 - self.mix) + r2.offset * self.mix
 
         return result
