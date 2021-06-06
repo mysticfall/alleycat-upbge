@@ -11,7 +11,7 @@ from .support import LoggingSupport
 
 
 def get_logger_name(obj: Any, drop_last_path: bool = True) -> str:
-    not_empty(obj)
+    not_empty(obj, allow_empty=True)
 
     segments = obj.__module__.split(".")
     identifiers = [obj.__qualname__ if isinstance(obj, type) else type(obj).__qualname__]

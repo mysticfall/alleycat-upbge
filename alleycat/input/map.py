@@ -50,7 +50,7 @@ class InputMap(Lookup[Any], LoggingSupport):
                     config: Mapping[str, Any]) -> InputMap:
         not_empty(binding_factory)
         not_empty(input_factory)
-        not_empty(config)
+        not_empty(config, allow_empty=True)
 
         logger = log.get_logger(cls)
 
