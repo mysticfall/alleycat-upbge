@@ -44,8 +44,8 @@ class AnimationNodeTree(AnimationLoopAware, BaseNodeTree):
     def output(self) -> Maybe[AnimationLoopAware]:
         return self._output
 
-    def advance(self, animator: Animator) -> Maybe[AnimationResult]:
-        return self.output.bind(lambda o: o.advance(not_empty(animator)))
+    def advance(self, animator: Animator) -> AnimationResult:
+        return self.output.map(lambda o: o.advance(not_empty(animator))).or_else_call(AnimationResult)
 
 
 class AnimationNodeCategory(NodeCategory):

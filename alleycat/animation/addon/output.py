@@ -56,9 +56,9 @@ class AnimationOutputNode(AnimationNode):
 
         link.is_valid = isinstance(link.from_socket, NodeSocketAnimation)
 
-    def advance(self, animator: Animator) -> Maybe[AnimationResult]:
+    def advance(self, animator: Animator) -> AnimationResult:
         not_empty(animator)
 
         animator.layer = self.depth
 
-        return self.input.bind(lambda i: i.advance(not_empty(animator)))
+        return self.input.map(lambda i: i.advance(not_empty(animator))).or_else_call(AnimationResult)

@@ -3,7 +3,7 @@ from typing import Optional
 from bpy.props import BoolProperty, EnumProperty, PointerProperty
 from bpy.types import Action, Context, NodeLink, UILayout
 from mathutils import Vector
-from returns.maybe import Maybe, Nothing, Some
+from returns.maybe import Nothing
 from validator_collection import validators
 
 from alleycat.animation import AnimationResult, Animator
@@ -31,7 +31,7 @@ class PlayActionNode(AnimationNode):
 
     root_motion: BoolProperty(name="Root Motion", options={"LIBRARY_EDITABLE"})  # type:ignore
 
-    _result: Maybe[AnimationResult] = Nothing
+    _result: Optional[AnimationResult] = None
 
     # noinspection PyUnusedLocal
     def init(self, context: Optional[Context]) -> None:
@@ -86,16 +86,14 @@ class PlayActionNode(AnimationNode):
         layout.prop(self, "mode")
         layout.prop(self, "root_motion")
 
-    def advance(self, animator: Animator) -> Maybe[AnimationResult]:
-        if self._result == Nothing:
-            result = AnimationResult()
-            self._result = Some(result)
+    def advance(self, animator: Animator) -> AnimationResult:
+        if self._result:
+            self._result.reset()
         else:
-            result = self._result.unwrap()
-            result.reset()
+            self._result = AnimationResult()
 
         if not self.action or not self.active:
-            return Nothing
+            return self._result
 
         total = self.action.frame_range[-1]
 
@@ -118,7 +116,7 @@ class PlayActionNode(AnimationNode):
                 channel = group.channels[i]
                 offset[channel.array_index] = channel.evaluate(start_frame)
 
-            result.offset = offset - self.last_offset
+            self._result.offset = offset - self.last_offset
 
             self.last_offset = Vector((0, 0, 0)) if reset else offset
 

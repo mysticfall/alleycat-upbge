@@ -94,10 +94,12 @@ class MixAnimationNode(AnimationNode):
 
         layout.prop(self, "blend_mode")
 
-    def advance(self, animator: Animator) -> Maybe[AnimationResult]:
-        return self.input1.bind(lambda i1: self.input2.bind(lambda i2: self.process(i1, i2, animator)))
+    def advance(self, animator: Animator) -> AnimationResult:
+        return self.input1 \
+            .bind(lambda i1: self.input2.map(lambda i2: self.process(i1, i2, animator))) \
+            .or_else_call(AnimationResult)
 
-    def process(self, input1: AnimationNode, input2: AnimationNode, animator: Animator) -> Maybe[AnimationResult]:
+    def process(self, input1: AnimationNode, input2: AnimationNode, animator: Animator) -> AnimationResult:
         not_empty(input1)
         not_empty(input2)
 
@@ -118,7 +120,7 @@ class MixAnimationNode(AnimationNode):
 
         result2 = input2.advance(animator)
 
-        return result1.bind(lambda r1: result2.map(lambda r2: self._merge_result(r1, r2)))
+        return self._merge_result(result1, result2)
 
     def _merge_result(self, r1: AnimationResult, r2: AnimationResult) -> AnimationResult:
         assert self._result
