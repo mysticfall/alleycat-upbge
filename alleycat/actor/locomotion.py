@@ -10,6 +10,7 @@ from mathutils import Matrix, Vector
 from returns.iterables import Fold
 from returns.maybe import Maybe
 from returns.result import ResultE, Success, safe
+from rx import operators as ops
 
 from alleycat.animation import AnimationResult
 from alleycat.animation.addon import MixAnimationNode
@@ -103,7 +104,8 @@ class RootMotionLocomotion(Locomotion):
             self.object.applyMovement(result.offset @ mat, True)
 
         self.animation_graph.on_advance \
-            .subscribe(lambda r: r.map(process_result).value_or(None), on_error=self.error_handler)
+            .pipe(ops.take_until(self.on_dispose)) \
+            .subscribe(process_result, on_error=self.error_handler)
 
     def process(self) -> None:
         super().process()
