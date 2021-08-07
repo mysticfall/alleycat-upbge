@@ -20,12 +20,14 @@
           "x": {
             "type": "mouse_axis",
             "axis": "x",
-            "sensitivity": 0.4
+            "sensitivity": 0.4,
+            "dead_zone": 0.001
           },
           "y": {
             "type": "mouse_axis",
             "axis": "y",
-            "sensitivity": 0.4
+            "sensitivity": 0.4,
+            "dead_zone": 0.001
           }
         }
       },
