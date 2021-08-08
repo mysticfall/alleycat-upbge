@@ -26,10 +26,12 @@ from alleycat.input import InputMap
 class AnimationGraph(BaseComponent[BL_ArmatureObject]):
     class ArgKeys(BaseComponent.ArgKeys):
         ANIMATION_TREE: Final = "Animation Tree"
+        RIG: Final = "Rig"
         ROOT_BONE: Final = "Root Bone"
 
     args = OrderedDict(chain(BaseComponent.args.items(), (
         (ArgKeys.ANIMATION_TREE, NodeTree),
+        (ArgKeys.RIG, Object),
         (ArgKeys.ROOT_BONE, ""),
     )))
 
@@ -44,16 +46,20 @@ class AnimationGraph(BaseComponent[BL_ArmatureObject]):
         self._on_advance = Subject()
         self._last_timestamp: Maybe[datetime] = Nothing
 
+    @property
+    def rig(self) -> BL_ArmatureObject:
+        return self.params["rig"]
+
     @cached_property
     def animator(self) -> Animator:
         root_bone = self.params["root_bone"].value_or(None)
 
-        return GameObjectAnimator(self.object, root_bone=root_bone)
+        return GameObjectAnimator(self.rig, root_bone=root_bone)
 
     @cached_property
     def root_channel(self) -> Maybe[BL_ArmatureChannel]:
         return self.params["root_bone"] \
-            .map(lambda b: self.object.channels[b]) \
+            .map(lambda b: self.rig.channels[b]) \
             .bind(Maybe.from_optional)
 
     @property
@@ -70,7 +76,12 @@ class AnimationGraph(BaseComponent[BL_ArmatureObject]):
             .map(str.strip) \
             .bind(lambda s: Some(s) if len(s) > 0 else Nothing)
 
+        rig = require_type(
+            args.read(AnimationGraph.ArgKeys.RIG, Object).map(as_game_object).value_or(self.object),
+            BL_ArmatureObject)
+
         result = Fold.collect((
+            rig.map(lambda r: ("rig", r)),
             tree.map(lambda t: ("tree", t)),
             Success(("root_bone", root_bone)),
         ), Success(())).map(chain).map(dict)
@@ -108,12 +119,6 @@ class AnimationGraph(BaseComponent[BL_ArmatureObject]):
 
 
 class Animating(BaseComponent[KX_GameObject], ABC):
-    class ArgKeys(BaseComponent.ArgKeys):
-        ANIMATION_TARGET: Final = "Animation Target"
-
-    args = OrderedDict(chain(BaseComponent.args.items(), (
-        (ArgKeys.ANIMATION_TARGET, Object),
-    )))
 
     @property
     def animator(self) -> Animator:
@@ -124,11 +129,7 @@ class Animating(BaseComponent[KX_GameObject], ABC):
         return self.params["animation_graph"]
 
     def init_params(self, args: ArgumentReader) -> ResultE[Mapping]:
-        # noinspection PyTypeChecker
-        animation_graph = args \
-            .require(self.ArgKeys.ANIMATION_TARGET, Object) \
-            .map(self.as_game_object) \
-            .bind(lambda o: require_component(o, AnimationGraph))
+        animation_graph = self.require_component(AnimationGraph)
 
         result = Fold.collect((
             animation_graph.map(lambda a: ("animation_graph", a)),
