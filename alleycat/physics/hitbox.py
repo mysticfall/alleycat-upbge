@@ -141,11 +141,11 @@ class HitBox(BaseComponent[KX_GameObject]):
         return result.bind(lambda a: inherited.map(lambda b: a | b))
 
     def initialize(self) -> None:
-        super().initialize()
-
         rv.observe(self.active) \
             .pipe(ops.take_until(self.on_dispose)) \
             .subscribe(self.on_activation_change, self.error_handler)
+
+        super().initialize()
 
     def on_activation_change(self, active: bool) -> None:
         if active:

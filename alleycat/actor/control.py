@@ -107,8 +107,6 @@ class CharacterControl(BaseComponent[KX_GameObject]):
         return result.bind(lambda a: inherited.map(lambda b: a | b))
 
     def initialize(self) -> None:
-        super().initialize()
-
         def move(value: Vector):
             self.character.locomotion.movement = value
 
@@ -165,6 +163,8 @@ class CharacterControl(BaseComponent[KX_GameObject]):
         setup_input(on_zoom, ZoomableCamera, zoom)
 
         setup_switcher(on_zoom)
+
+        super().initialize()
 
     def process(self) -> None:
         view = self.camera_manager.active_camera

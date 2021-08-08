@@ -135,8 +135,6 @@ class Ragdoll(Collider):
         return result.bind(lambda a: inherited.map(lambda b: a | b))
 
     def initialize(self) -> None:
-        super().initialize()
-
         velocity = self.on_process.pipe(
             ops.map(lambda _: self.object.worldPosition.copy()),
             ops.timestamp(),
@@ -207,6 +205,8 @@ class Ragdoll(Collider):
         when_idle.pipe(
             ops.take_until(self.on_dispose)
         ).subscribe(lambda _: self.on_idle(), on_error=self.error_handler)
+
+        super().initialize()
 
     def on_idle(self) -> None:
         self.logger.info("Entering idle state.")

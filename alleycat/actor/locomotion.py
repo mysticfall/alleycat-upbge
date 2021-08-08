@@ -95,8 +95,6 @@ class RootMotionLocomotion(Locomotion):
         return result.bind(lambda a: inherited.map(lambda b: a | b))
 
     def initialize(self) -> None:
-        super().initialize()
-
         def process_result(result: AnimationResult) -> None:
             mat = self.root_bone_mat.or_else_call(lambda: Matrix.Identity(3)).inverted()
 
@@ -106,6 +104,8 @@ class RootMotionLocomotion(Locomotion):
         self.animation_graph.on_advance \
             .pipe(ops.take_until(self.on_dispose)) \
             .subscribe(process_result, on_error=self.error_handler)
+
+        super().initialize()
 
     def process(self) -> None:
         super().process()

@@ -33,8 +33,6 @@ class Collider(BaseComponent[KX_GameObject]):
         self._on_collision = Subject()
 
     def initialize(self) -> None:
-        super().initialize()
-
         def callback(obj: KX_GameObject, point: Vector, normal: Vector):
             evt = CollisionEvent(obj, point, normal)
 
@@ -44,6 +42,8 @@ class Collider(BaseComponent[KX_GameObject]):
                 self._on_collision.on_next(CollisionEvent(obj, point, normal))
 
         self.object.collisionCallbacks.append(callback)
+
+        super().initialize()
 
     @property
     def on_collision(self) -> Observable:

@@ -62,8 +62,6 @@ class CameraManager(BaseComponent[KX_GameObject]):
         return result.bind(lambda a: inherited.map(lambda b: a | b))
 
     def initialize(self) -> None:
-        super().initialize()
-
         def deactivate_others(current: CameraControl, active: CameraControl):
             next(map(lambda c: c.deactivate(), filter(lambda c: c != current, self.cameras)), None) if active else None
 
@@ -81,6 +79,8 @@ class CameraManager(BaseComponent[KX_GameObject]):
             ops.map(lambda states: next(s.camera for s in states if s.active)),
             ops.distinct_until_changed(),
             ops.do_action(lambda c: self.logger.info("Switching camera mode to %s.", c)))
+
+        super().initialize()
 
     def switch_to_1st_person(self) -> None:
         self.first_person_camera.map(lambda c: c.activate())

@@ -80,12 +80,12 @@ class AnimationGraph(BaseComponent[BL_ArmatureObject]):
         return result.bind(lambda a: inherited.map(lambda b: a | b))
 
     def initialize(self) -> None:
-        super().initialize()
-
         self.tree.start()
 
         for node in self.tree.nodes:
             self.logger.debug("Found node: %s.", node)
+
+        super().initialize()
 
     def process(self) -> None:
         timestamp = self.scheduler.now
