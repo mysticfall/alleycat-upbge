@@ -34,6 +34,7 @@ def scheduler(mocker: MockerFixture) -> EventLoopScheduler:
     return EventLoopScheduler()
 
 
+# noinspection DuplicatedCode
 @fixture
 def source(mocker: MockerFixture, scheduler: EventLoopScheduler) -> MouseInputSource:
     events = type(mocker.patch("bge.events"))

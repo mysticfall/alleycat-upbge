@@ -79,6 +79,7 @@ def test_layout(border: Border, container: Container, context: Context):
     assert_image(f"border-{border.name}", context)
 
 
+# noinspection DuplicatedCode
 @mark.parametrize("areas", (
         {Border.Center, Border.Top},
         {Border.Center, Border.Left, Border.Right},
@@ -116,6 +117,7 @@ def test_item_visibility_multiple_items(border: Border, layout: BorderLayout, co
     assert_image(f"border-{border.name}", context)
 
 
+# noinspection DuplicatedCode
 @mark.parametrize("areas", (
         {Border.Center, Border.Top},
         {Border.Center, Border.Left, Border.Right},

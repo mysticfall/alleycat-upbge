@@ -5,6 +5,7 @@ from alleycat.ui.glass import StyleKeys
 from tests.ui import UI, assert_image
 
 
+# noinspection DuplicatedCode
 @fixture
 def context() -> Context:
     return UI().create_context()

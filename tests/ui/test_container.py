@@ -146,6 +146,7 @@ def test_component_parent(context: Context):
     assert parents == [Nothing, Some(parent1), Nothing, Some(parent2), Nothing]
 
 
+# noinspection DuplicatedCode
 def test_absolute_layout(context: Context):
     container = Frame(context, AbsoluteLayout())
     container.bounds = Bounds(30, 30, 200, 200)

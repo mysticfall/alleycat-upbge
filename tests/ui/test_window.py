@@ -227,6 +227,7 @@ def test_resize(
     assert_image(image, context)
 
 
+# noinspection DuplicatedCode
 @mark.parametrize("drag_from, drag_to, expected", (
         (Point(40, 25), Point(40, 95), Bounds(20, 80, 60, 0)),
         (Point(75, 25), Point(5, 95), Bounds(20, 80, 0, 0)),
@@ -259,6 +260,7 @@ def test_resize_to_collapse(
     assert window.bounds == expected
 
 
+# noinspection DuplicatedCode
 @mark.parametrize("drag_from, drag_to, expected", (
         (Point(40, 25), Point(40, 95), Bounds(20, 50, 60, 30)),
         (Point(75, 25), Point(5, 95), Bounds(20, 50, 30, 30)),

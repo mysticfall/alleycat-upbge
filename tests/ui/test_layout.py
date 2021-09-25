@@ -12,6 +12,7 @@ def context() -> Context:
     return UI().create_context()
 
 
+# noinspection DuplicatedCode
 def test_nested_layout(context: Context):
     box = Frame(context, VBoxLayout())
     box.bounds = Bounds(0, 0, 100, 100)

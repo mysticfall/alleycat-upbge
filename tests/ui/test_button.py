@@ -58,6 +58,7 @@ def test_draw(context: Context):
     assert_image("draw", context, tolerance=Tolerance)
 
 
+# noinspection DuplicatedCode
 @mark.parametrize("align", TextAlign)
 @mark.parametrize("vertical_align", TextAlign)
 def test_align(align: TextAlign, vertical_align: TextAlign, context: Context):
@@ -84,6 +85,7 @@ def test_align(align: TextAlign, vertical_align: TextAlign, context: Context):
     assert_image(test_name, context, tolerance=Tolerance)
 
 
+# noinspection DuplicatedCode
 def test_hover(context: Context, mouse: FakeMouseInput):
     window = Window(context)
     window.bounds = Bounds(0, 0, 100, 60)
@@ -125,6 +127,7 @@ def test_hover(context: Context, mouse: FakeMouseInput):
     assert_image("hover_mouse_over2", context, tolerance=Tolerance)
 
 
+# noinspection DuplicatedCode
 def test_active(context: Context, mouse: FakeMouseInput):
     window = Window(context)
     window.bounds = Bounds(0, 0, 100, 60)
@@ -185,6 +188,7 @@ def test_active(context: Context, mouse: FakeMouseInput):
     assert_image("active_right_button", context, tolerance=Tolerance)
 
 
+# noinspection DuplicatedCode
 def test_validation(context: Context):
     laf = context.look_and_feel
     fonts = context.toolkit.fonts
@@ -230,6 +234,7 @@ def test_validation(context: Context):
     test_style(button)
 
 
+# noinspection DuplicatedCode
 def test_ui_extents(context: Context):
     button = LabelButton(context)
     ui = cast(LabelUI, button.ui)
@@ -249,6 +254,7 @@ def test_ui_extents(context: Context):
     assert ui.extents(button).height == approx(10.840, abs=TextTolerance)
 
 
+# noinspection DuplicatedCode
 @mark.parametrize("padding", (Insets(0, 0, 0, 0), Insets(5, 5, 5, 5), Insets(10, 5, 0, 3)))
 def test_minimum_size(padding: Insets, context: Context):
     with LabelButton(context) as button:
@@ -314,6 +320,7 @@ def test_minimum_size(padding: Insets, context: Context):
         assert button.bounds == Bounds(0, 0, 80, 50)
 
 
+# noinspection DuplicatedCode
 @mark.parametrize("padding", (Insets(0, 0, 0, 0), Insets(5, 5, 5, 5), Insets(10, 5, 0, 3)))
 def test_preferred_size(padding: Insets, context: Context):
     with LabelButton(context) as button:

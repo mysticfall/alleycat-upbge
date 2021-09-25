@@ -16,6 +16,7 @@ def container(context: Context) -> Container:
     return Frame(context, AbsoluteLayout())
 
 
+# noinspection DuplicatedCode
 def test_layout(container: Container, context: Context):
     container.bounds = Bounds(30, 30, 200, 200)
 

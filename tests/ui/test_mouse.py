@@ -64,6 +64,7 @@ def test_buttons(mouse: FakeMouseInput):
     assert not mouse.pressed(MouseButton.RIGHT)
 
 
+# noinspection DuplicatedCode
 def test_mouse_move(mouse: FakeMouseInput, component: Component, window: Window):
     events = []
     parent_events = []
@@ -87,6 +88,7 @@ def test_mouse_move(mouse: FakeMouseInput, component: Component, window: Window)
     assert parent_events == [MouseMoveEvent(window, Point(20, 20)), MouseMoveEvent(window, Point(30, 30))]
 
 
+# noinspection DuplicatedCode
 def test_mouse_down(mouse: FakeMouseInput, component: Component, window: Window):
     events = []
     parent_events = []
@@ -131,6 +133,7 @@ def test_mouse_down(mouse: FakeMouseInput, component: Component, window: Window)
     ]
 
 
+# noinspection DuplicatedCode
 def test_mouse_up(mouse: FakeMouseInput, component: Component, window: Window):
     events = []
     parent_events = []
@@ -173,6 +176,7 @@ def test_mouse_up(mouse: FakeMouseInput, component: Component, window: Window):
     ]
 
 
+# noinspection DuplicatedCode
 def test_mouse_over(mouse: FakeMouseInput, component: Component, window: Window):
     events = []
     parent_events = []
@@ -208,6 +212,7 @@ def test_mouse_over(mouse: FakeMouseInput, component: Component, window: Window)
     assert parent_events == [MouseOverEvent(window, Point(20, 20))]
 
 
+# noinspection DuplicatedCode
 def test_mouse_out(mouse: FakeMouseInput, component: Component, window: Window):
     events = []
     parent_events = []
@@ -242,6 +247,7 @@ def test_mouse_out(mouse: FakeMouseInput, component: Component, window: Window):
     assert parent_events == [MouseOutEvent(window, Point(10, 10)), MouseOutEvent(window, Point(0, 0))]
 
 
+# noinspection DuplicatedCode
 def test_drag_start(mouse: FakeMouseInput, component: Component, window: Window):
     events = []
     parent_events = []
@@ -275,6 +281,7 @@ def test_drag_start(mouse: FakeMouseInput, component: Component, window: Window)
     assert parent_events[1:] == [DragStartEvent(window, Point(30, 30), MouseButton.MIDDLE)]
 
 
+# noinspection DuplicatedCode
 def test_drag(mouse: FakeMouseInput, component: Component, window: Window):
     events = []
     parent_events = []

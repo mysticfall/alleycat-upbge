@@ -25,6 +25,7 @@ def container(layout: Layout, context: Context) -> Container:
     return frame
 
 
+# noinspection DuplicatedCode
 def test_layout(container: Container, context: Context):
     child1 = Panel(context)
     child1.bounds = Bounds(10, 10, 20, 20)
@@ -62,6 +63,7 @@ def test_layout(container: Container, context: Context):
     assert_image("stack-fill2", context)
 
 
+# noinspection DuplicatedCode
 @mark.parametrize("padding", (Insets(10, 10, 10, 10), Insets(15, 0, 15, 0), Insets(0, 10, 20, 0)))
 def test_layout_with_insets(padding: Insets, layout: StackLayout, container: Container, context: Context):
     child1 = Panel(context)

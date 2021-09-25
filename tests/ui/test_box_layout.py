@@ -12,6 +12,7 @@ def context() -> Context:
     return UI().create_context()
 
 
+# noinspection DuplicatedCode
 @mark.parametrize("direction", BoxDirection)
 @mark.parametrize("spacing", (0, 10))
 @mark.parametrize("padding", (Insets(0, 0, 0, 0), Insets(15, 20, 10, 5)))
@@ -67,6 +68,7 @@ def test_hbox_layout(direction: BoxDirection, spacing: float, padding: Insets, a
     assert_image(prefix + "half-size", context)
 
 
+# noinspection DuplicatedCode
 @mark.parametrize("child1_visible", (True, False))
 @mark.parametrize("child2_visible", (True, False))
 @mark.parametrize("child3_visible", (True, False))
@@ -107,6 +109,7 @@ def test_hbox_hide_child(child1_visible: bool, child2_visible: bool, child3_visi
     assert_image(name, context)
 
 
+# noinspection DuplicatedCode
 @mark.parametrize("direction", BoxDirection)
 @mark.parametrize("spacing", (0, 10))
 @mark.parametrize("padding", (Insets(0, 0, 0, 0), Insets(15, 20, 10, 5)))
@@ -162,6 +165,7 @@ def test_vbox_layout(direction: BoxDirection, spacing: float, padding: Insets, a
     assert_image(prefix + "half-size", context)
 
 
+# noinspection DuplicatedCode
 @mark.parametrize("child1_visible", (True, False))
 @mark.parametrize("child2_visible", (True, False))
 @mark.parametrize("child3_visible", (True, False))

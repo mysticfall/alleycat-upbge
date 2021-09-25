@@ -52,6 +52,7 @@ def test_draw(context: Context):
     assert_image("draw", context, tolerance=Tolerance)
 
 
+# noinspection DuplicatedCode
 @mark.parametrize("align", TextAlign)
 @mark.parametrize("vertical_align", TextAlign)
 def test_align(align: TextAlign, vertical_align: TextAlign, context: Context):
@@ -78,6 +79,7 @@ def test_align(align: TextAlign, vertical_align: TextAlign, context: Context):
     assert_image(test_name, context, tolerance=Tolerance)
 
 
+# noinspection DuplicatedCode
 def test_validation(context: Context):
     laf = context.look_and_feel
     fonts = context.toolkit.fonts
@@ -123,6 +125,7 @@ def test_validation(context: Context):
     test_style(label)
 
 
+# noinspection DuplicatedCode
 def test_ui_extents(context: Context):
     label = Label(context)
     ui = cast(LabelUI, label.ui)
@@ -142,6 +145,7 @@ def test_ui_extents(context: Context):
     assert ui.extents(label).height == approx(10.840, abs=TextTolerance)
 
 
+# noinspection DuplicatedCode
 @mark.parametrize("padding", (Insets(0, 0, 0, 0), Insets(5, 5, 5, 5), Insets(10, 5, 0, 3)))
 def test_minimum_size(padding: Insets, context: Context):
     with Label(context) as label:
@@ -206,6 +210,7 @@ def test_minimum_size(padding: Insets, context: Context):
         assert label.bounds == Bounds(0, 0, 80, 50)
 
 
+# noinspection DuplicatedCode
 @mark.parametrize("padding", (Insets(0, 0, 0, 0), Insets(5, 5, 5, 5), Insets(10, 5, 0, 3)))
 def test_preferred_size(padding: Insets, context: Context):
     with Label(context) as label:

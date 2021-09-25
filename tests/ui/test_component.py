@@ -141,6 +141,7 @@ def test_validation(context: Context):
     assert comp.preferred_size == Dimension(40, 40)
 
 
+# noinspection DuplicatedCode
 def test_minimum_size(context: Context):
     minimum_size = Dimension(10, 10)
 
@@ -208,6 +209,7 @@ def test_minimum_size(context: Context):
     assert comp.bounds == Bounds(0, 0, 240, 260)
 
 
+# noinspection DuplicatedCode
 def test_preferred_size(context: Context):
     preferred_size = Dimension(10, 10)
 
