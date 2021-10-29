@@ -18,6 +18,7 @@ from alleycat.animation import Animator
 from alleycat.animation.addon import AnimationNodeTree
 from alleycat.animation.runtime import GameObjectAnimator
 from alleycat.common import ArgumentReader
+from alleycat.common.validators import require_type
 from alleycat.event import EventLoopScheduler
 from alleycat.game import BaseComponent, GameContext, require_component
 from alleycat.input import InputMap
@@ -77,7 +78,7 @@ class AnimationGraph(BaseComponent[BL_ArmatureObject]):
             .bind(lambda s: Some(s) if len(s) > 0 else Nothing)
 
         rig = require_type(
-            args.read(AnimationGraph.ArgKeys.RIG, Object).map(as_game_object).value_or(self.object),
+            args.read(AnimationGraph.ArgKeys.RIG, Object).map(self.as_game_object).value_or(self.object),
             BL_ArmatureObject)
 
         result = Fold.collect((
@@ -129,7 +130,7 @@ class Animating(BaseComponent[KX_GameObject], ABC):
         return self.params["animation_graph"]
 
     def init_params(self, args: ArgumentReader) -> ResultE[Mapping]:
-        animation_graph = self.require_component(AnimationGraph)
+        animation_graph = require_component(self.object, AnimationGraph)
 
         result = Fold.collect((
             animation_graph.map(lambda a: ("animation_graph", a)),
