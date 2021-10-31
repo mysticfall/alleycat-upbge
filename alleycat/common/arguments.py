@@ -34,9 +34,10 @@ class ArgumentReader:
         if not_empty(key) in self.source:
             value = self.source[key]
 
-            if not isinstance(value, not_empty(tpe)):
-                return Failure(ValueError(f"Component property '{key}' has an invalid value: '{value}'."))
+            if value is not None:
+                if not isinstance(value, not_empty(tpe)):
+                    return Failure(ValueError(f"Property '{key}' has an invalid value: '{value}'."))
 
-            return Success(value)
-        else:
-            return Failure(ValueError(f"Missing component property '{key}'."))
+                return Success(value)
+
+        return Failure(ValueError(f"Missing component property '{key}'."))

@@ -27,4 +27,4 @@ def test_require(args: dict):
     assert config("b", str) == Success("B")
 
     assert str(config("c", str).swap().unwrap()) == "Missing component property 'c'."
-    assert str(config("a", str).swap().unwrap()) == "Component property 'a' has an invalid value: '1'."
+    assert str(config("a", str).swap().unwrap()) == "Property 'a' has an invalid value: '1'."
