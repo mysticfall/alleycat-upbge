@@ -1,4 +1,4 @@
-from typing import Type, TypeVar
+from typing import Any, Mapping, Type, TypeVar
 
 from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, ResultE, Success
@@ -9,17 +9,20 @@ T = TypeVar("T")
 
 class ArgumentReader:
 
-    def __init__(self, args: dict):
+    def __init__(self, args: Mapping[str, Any]):
         super().__init__()
 
-        self._source = not_empty(args, allow_empty=True)
+        if args is None:
+            raise ValueError("Argument 'args' is missing.")
+
+        self._source = args
 
     @property
-    def source(self) -> dict:
+    def source(self) -> Mapping[str, Any]:
         return self._source
 
     def read(self, key: str, tpe: Type[T]) -> Maybe[T]:
-        if not_empty(key) in not_empty(self.source):
+        if not_empty(key) in self.source:
             value = self.source[key]
 
             if isinstance(value, not_empty(tpe)):
@@ -28,7 +31,7 @@ class ArgumentReader:
         return Nothing
 
     def require(self, key: str, tpe: Type[T]) -> ResultE[T]:
-        if not_empty(key) in not_empty(self.source):
+        if not_empty(key) in self.source:
             value = self.source[key]
 
             if not isinstance(value, not_empty(tpe)):
