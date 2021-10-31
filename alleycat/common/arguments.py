@@ -12,7 +12,7 @@ class ArgumentReader:
     def __init__(self, args: dict):
         super().__init__()
 
-        self._source = not_empty(args)
+        self._source = not_empty(args, allow_empty=True)
 
     @property
     def source(self) -> dict:
