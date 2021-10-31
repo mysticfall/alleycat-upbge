@@ -3,7 +3,6 @@ from logging import Logger
 from typing import Any
 
 from bpy.types import ID
-from validator_collection import not_empty
 
 from .console import ConsoleLogger
 from .error import ErrorHandler, ErrorHandlerSupport
@@ -11,7 +10,8 @@ from .support import LoggingSupport
 
 
 def get_logger_name(obj: Any, drop_last_path: bool = True) -> str:
-    not_empty(obj, allow_empty=True)
+    if obj is None:
+        raise ValueError("Argument 'obj' is missing.")
 
     segments = obj.__module__.split(".")
     identifiers = [obj.__qualname__ if isinstance(obj, type) else type(obj).__qualname__]

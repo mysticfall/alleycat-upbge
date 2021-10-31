@@ -50,7 +50,9 @@ class InputMap(Lookup[Any], LoggingSupport):
                     config: Mapping[str, Any]) -> InputMap:
         not_empty(binding_factory)
         not_empty(input_factory)
-        not_empty(config, allow_empty=True)
+
+        if config is None:
+            raise ValueError("Argument 'config' is missing.")
 
         logger = log.get_logger(cls)
 
