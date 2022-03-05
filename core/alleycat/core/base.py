@@ -4,7 +4,6 @@ from logging import Logger
 from typing import Final
 
 from bge.types import KX_GameObject, KX_PythonComponent
-from dependency_injector.wiring import inject
 from returns.result import Result, ResultE
 
 from alleycat.common import AlreadyDisposedError, NotStartedError
@@ -33,7 +32,6 @@ class BaseProxy(ArgumentsHolder, ABC):
     def valid(self) -> bool:
         return isinstance(self.arg_values, Result.success_type)
 
-    @inject
     def start(self, args: OrderedDict) -> None:
         self._args_values = Result.from_value(args)
 
