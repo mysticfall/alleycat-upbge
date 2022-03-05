@@ -38,14 +38,22 @@ def setup_types(module: ModuleType) -> None:
 
 
 def setup_logic(module: ModuleType) -> None:
-    module._frame_time = 0
+    module._clock_time = 0
 
     def get_frame_time():
-        # noinspection PyProtectedMember
-        return module._frame_time
+        return 0
 
-    def set_frame_time(time):
-        module._frame_time = time
+    def get_clock_time():
+        # noinspection PyProtectedMember
+        return module._clock_time
+
+    def set_clock_time(time):
+        module._clock_time = time
+
+    def get_real_time():
+        return 0
 
     module.getFrameTime = get_frame_time
-    module.setFrameTime = set_frame_time
+    module.getClockTime = get_clock_time
+    module.setClockTime = set_clock_time
+    module.getRealTime = get_real_time
