@@ -180,6 +180,14 @@ pytest = ">=5.0"
 dev = ["pre-commit", "tox", "pytest-asyncio"]
 
 [[package]]
+name = "reactivex"
+version = "4.0.0a3"
+description = "Reactive Extensions (Rx) for Python"
+category = "main"
+optional = false
+python-versions = ">=3.7,<3.11"
+
+[[package]]
 name = "returns"
 version = "0.18.0"
 description = "Make your functions return something meaningful, typed, and safe!"
@@ -189,14 +197,6 @@ python-versions = ">=3.7,<4.0"
 
 [package.dependencies]
 typing-extensions = ">=4.0,<5.0"
-
-[[package]]
-name = "rx"
-version = "3.2.0"
-description = "Reactive Extensions (Rx) for Python"
-category = "main"
-optional = false
-python-versions = ">=3.6.0"
 
 [[package]]
 name = "six"
@@ -224,7 +224,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "upbge-stubs"
-version = "0.3.1.26.dev1896407843"
+version = "0.3.1.26.dev1936770877"
 description = "API stubs for Blender and UPBGE generated with bpystubgen."
 category = "dev"
 optional = false
@@ -247,8 +247,8 @@ test = ["coverage", "pytest", "pytest-benchmark", "pytest-cov", "tox", "codecov"
 
 [metadata]
 lock-version = "1.1"
-python-versions = "^3.10"
-content-hash = "2ee00154128c43f0abc43ad0b9c947888a770b6cbc5b6a36cc900062e20a741c"
+python-versions = ">=3.10,<3.11"
+content-hash = "dc3e58bb018d660ea360f74f723146f13f02de9cd40ad43e6e4af1e116cf01f3"
 
 [metadata.files]
 atomicwrites = [
@@ -382,13 +382,13 @@ pytest-mock = [
     {file = "pytest-mock-3.7.0.tar.gz", hash = "sha256:5112bd92cc9f186ee96e1a92efc84969ea494939c3aead39c50f421c4cc69534"},
     {file = "pytest_mock-3.7.0-py3-none-any.whl", hash = "sha256:6cff27cec936bf81dc5ee87f07132b807bcda51106b5ec4b90a04331cba76231"},
 ]
+reactivex = [
+    {file = "reactivex-4.0.0a3-py3-none-any.whl", hash = "sha256:2dd5547e51e2acb9204c0857b1c8d91c20695a63ea24bfa044f65fd17ef5537a"},
+    {file = "reactivex-4.0.0a3.tar.gz", hash = "sha256:b0fcae36e3c91efb209ed643b60626f4b0b31307e373335a820d34212338092d"},
+]
 returns = [
     {file = "returns-0.18.0-py3-none-any.whl", hash = "sha256:48b36f9ac4f78ae9c825234bf17e2cbb607f263c4149c524fae0f8f76b877ba3"},
     {file = "returns-0.18.0.tar.gz", hash = "sha256:b43b84fca6ed5b2fe7f776a53ef83778c138b8c99494ab283a7f125b00945421"},
-]
-rx = [
-    {file = "Rx-3.2.0-py3-none-any.whl", hash = "sha256:922c5f4edb3aa1beaa47bf61d65d5380011ff6adcd527f26377d05cb73ed8ec8"},
-    {file = "Rx-3.2.0.tar.gz", hash = "sha256:b657ca2b45aa485da2f7dcfd09fac2e554f7ac51ff3c2f8f2ff962ecd963d91c"},
 ]
 six = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
@@ -403,7 +403,7 @@ typing-extensions = [
     {file = "typing_extensions-4.1.1.tar.gz", hash = "sha256:1a9462dcc3347a79b1f1c0271fbe79e844580bb598bafa1ed208b94da3cdcd42"},
 ]
 upbge-stubs = [
-    {file = "upbge-stubs-0.3.1.26.dev1896407843.tar.gz", hash = "sha256:006efdf94eea16b8b3ac40efa5bf4db162a4cf37ea350a18939a34ec8ae523ce"},
+    {file = "upbge-stubs-0.3.1.26.dev1936770877.tar.gz", hash = "sha256:a12c636f43ad9e9247efbeb3ed0f2f32e074941540bfe5a9ac11bb2e261a6d34"},
 ]
 validator-collection = [
     {file = "validator-collection-1.5.0.tar.gz", hash = "sha256:f9395cad9a30cb9864fa0c0d18a84daead1eb8807774f4e09f588f89b7dc77d8"},
