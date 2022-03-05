@@ -5,7 +5,7 @@ from bge.types import KX_PythonComponent
 from dependency_injector.providers import Configuration
 
 
-class Feature(ABC, KX_PythonComponent):
+class Feature(KX_PythonComponent, ABC):
 
     def start(self, args: OrderedDict) -> None:
         pass
