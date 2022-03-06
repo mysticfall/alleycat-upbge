@@ -1,4 +1,4 @@
-from alleycat.test import bge, bpy
+from alleycat.test import mock_bge, mock_bpy
 
-bpy.setup()
-bge.setup()
+mock_bpy.setup()
+mock_bge.setup()
