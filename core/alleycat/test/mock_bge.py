@@ -9,9 +9,9 @@ from alleycat.test import mock_module
 
 
 # noinspection PyPep8Naming
-@dataclass
+@dataclass(frozen=True)
 class SCA_InputEvent:
-    status: int
+    status: Tuple[int] = ()
     queue: Tuple[int] = ()
     values: Tuple[int] = ()
 
