@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from logging import Logger
-from typing import Final
+from typing import Final, final
 
 from bge.types import KX_GameObject, KX_PythonComponent
 from returns.result import Result, ResultE
@@ -24,6 +24,7 @@ class BaseProxy(ArgumentsHolder, ABC):
     def logger(self) -> Logger:
         pass
 
+    @final
     @property
     def arg_values(self) -> ResultE[OrderedDict]:
         return self._args_values
