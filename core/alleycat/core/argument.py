@@ -83,12 +83,18 @@ class ArgumentDescriptor:
 
         assert self.key, "The descriptor is not associated with a class."
 
-        def fail_for_missing_arg():
-            return Failure(ValueError(f"Missing required argument '{self.key}'."))
+        def read(args: OrderedDict):
+            def fail_for_missing_arg():
+                return Failure(ValueError(f"Missing required argument '{self.key}'."))
 
-        value = instance.arg_values \
-            .map(lambda v: v[self.key]) \
-            .bind(lambda v: fail_for_missing_arg() if v is None else require_type(v, self.value_type))
+            if self.key not in args:
+                return fail_for_missing_arg()
+
+            arg_value = args[self.key]
+
+            return fail_for_missing_arg() if arg_value is None else require_type(arg_value, self.value_type)
+
+        value = instance.arg_values.bind(read)
 
         if self.return_type == Result:
             return value
