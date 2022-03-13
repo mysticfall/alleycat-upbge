@@ -3,7 +3,7 @@ from abc import ABC
 from dataclasses import dataclass
 from logging import Logger
 from types import ModuleType
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 
 from alleycat.test import mock_module
 
@@ -48,6 +48,8 @@ def setup_types(module: ModuleType) -> None:
             return logging.getLogger()
 
     class KX_GameObject(KX_PythonProxy):
+        components: List[KX_PythonProxy] = []
+
         def __init__(self, *arg):
             pass
 
