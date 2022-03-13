@@ -4,8 +4,11 @@ from alleycat.test import mock_module
 
 
 def setup() -> None:
-    mock_module("bpy.path", setup_path)
-    mock_module("bpy.types", setup_types)
+    def setup_bpy(module: ModuleType):
+        module.path = mock_module("bpy.path", setup_path)
+        module.types = mock_module("bpy.types", setup_types)
+
+    mock_module("bpy", setup_bpy)
 
 
 def setup_path(module: ModuleType) -> None:
