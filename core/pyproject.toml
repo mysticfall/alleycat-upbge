@@ -10,8 +10,8 @@ packages = [
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
-returns = "^0.18.0"
-reactivex = "^4.0.0a3"
+returns = "^0.19.0"
+reactivex = "^4.0.0"
 validator-collection = "^1.5.0"
 dependency-injector = "^4.38.0"
 
@@ -19,7 +19,7 @@ dependency-injector = "^4.38.0"
 upbge-stubs = { version = "^0.3.1", allow-prereleases = true }
 pytest = "^7.0.1"
 pytest-mock = "^3.7.0"
-mypy = "^0.931"
+mypy = "^0.941"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

@@ -6,12 +6,13 @@ from time import mktime
 from typing import Final, Optional, TypeVar
 
 import bge
-from rx import Observable
-from rx.core.typing import AbsoluteTime, RelativeTime, ScheduledAction
-from rx.disposable import Disposable
-from rx.scheduler import ScheduledItem
-from rx.scheduler.periodicscheduler import PeriodicScheduler
-from rx.subject import Subject
+from reactivex import Observable
+from reactivex.abc import ScheduledAction
+from reactivex.abc.scheduler import AbsoluteTime, RelativeTime
+from reactivex.disposable import Disposable
+from reactivex.scheduler import ScheduledItem
+from reactivex.scheduler.periodicscheduler import PeriodicScheduler
+from reactivex.subject import Subject
 
 DELTA_ZERO: Final = timedelta(0)
 

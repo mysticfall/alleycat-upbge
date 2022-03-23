@@ -2,9 +2,9 @@ from abc import ABC, abstractmethod
 from collections import OrderedDict
 from typing import Generic, TypeVar, final
 
+from reactivex import Observable, operators as ops
+from reactivex.subject import ReplaySubject
 from returns.result import Result, ResultE
-from rx import Observable, operators as ops
-from rx.subject import ReplaySubject
 
 from alleycat.core import BaseProxy, RESULT_DISPOSED, RESULT_NOT_STARTED
 

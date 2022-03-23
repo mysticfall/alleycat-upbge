@@ -8,8 +8,8 @@ from typing import Set
 
 from bge.events import LEFTMOUSE, MIDDLEMOUSE, RIGHTMOUSE
 from bge.logic import KX_INPUT_ACTIVE, mouse
+from reactivex import Observable, operators as ops
 from returns.result import Result, ResultE
-from rx import Observable, operators as ops
 
 from alleycat.common import Point2D
 from alleycat.core import BaseComponent
