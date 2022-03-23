@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from collections import OrderedDict
 from logging import Logger
 from typing import Final, final
@@ -19,10 +19,7 @@ RESULT_DISPOSED: Final = Result.from_failure(
 class BaseProxy(ArgumentsHolder, ABC):
     _args_values: ResultE[OrderedDict] = RESULT_NOT_STARTED
 
-    @property
-    @abstractmethod
-    def logger(self) -> Logger:
-        pass
+    logger: Logger
 
     @final
     @property
@@ -42,9 +39,9 @@ class BaseProxy(ArgumentsHolder, ABC):
         self._args_values = RESULT_DISPOSED
 
 
-class BaseComponent(KX_PythonComponent, BaseProxy, ABC):
+class BaseComponent(BaseProxy, KX_PythonComponent, ABC):
     pass
 
 
-class BaseObject(KX_GameObject, BaseProxy, ABC):
+class BaseObject(BaseProxy, KX_GameObject, ABC):
     pass
