@@ -1,12 +1,11 @@
 from abc import ABC
 from collections import OrderedDict
-from logging import Logger
 from typing import Final, final
 
 from bge.types import KX_GameObject, KX_PythonComponent
 from returns.result import Result, ResultE
 
-from alleycat.common import AlreadyDisposedError, NotStartedError
+from alleycat.common import AlreadyDisposedError, LoggingSupport, NotStartedError
 from alleycat.core import ArgumentsHolder
 
 RESULT_NOT_STARTED: Final = Result.from_failure(
@@ -16,10 +15,8 @@ RESULT_DISPOSED: Final = Result.from_failure(
     AlreadyDisposedError("The proxy instance has been disposed already."))
 
 
-class BaseProxy(ArgumentsHolder, ABC):
+class BaseProxy(ArgumentsHolder, LoggingSupport, ABC):
     _args_values: ResultE[OrderedDict] = RESULT_NOT_STARTED
-
-    logger: Logger
 
     @final
     @property
