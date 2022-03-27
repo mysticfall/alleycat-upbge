@@ -16,7 +16,7 @@ class ArgumentsHolder(ABC):
 
     @property
     @abstractmethod
-    def arg_values(self) -> ResultE[OrderedDict]:
+    def start_args(self) -> ResultE[OrderedDict]:
         pass
 
     def __init_subclass__(cls, **kwargs) -> None:
@@ -94,7 +94,7 @@ class ArgumentDescriptor:
 
             return fail_for_missing_arg() if arg_value is None else require_type(arg_value, self.value_type)
 
-        value = instance.arg_values.bind(read)
+        value = instance.start_args.bind(read)
 
         if self.return_type == Result:
             return value
