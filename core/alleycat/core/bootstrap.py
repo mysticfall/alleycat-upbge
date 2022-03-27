@@ -2,14 +2,19 @@ import json
 import sys
 from collections import OrderedDict
 from pathlib import Path
-from typing import cast
+from typing import Callable, List, cast
 
 from bge.types import KX_GameObject
 from bpy.path import abspath
 from dependency_injector.providers import Configuration
-from validator_collection import validators
+from validator_collection import not_empty, validators
 
 from alleycat.core import Feature
+
+Initializer = Callable[[], None]
+
+_initialized = False
+_initializers: List[Initializer] = []
 
 
 class Bootstrap(KX_GameObject):
@@ -53,4 +58,24 @@ class Bootstrap(KX_GameObject):
         # noinspection SpellCheckingInspection
         sys.excepthook = except_hook
 
+        for callback in _initializers:
+            try:
+                callback()
+            except Exception as e:
+                self.logger.exception(e, exc_info=True)
+
+        global _initialized
+
+        _initialized = True
+        _initializers.clear()
+
         self.logger.info("Bootstrap has completed successfully.")
+
+    @staticmethod
+    def when_ready(callback: Initializer) -> None:
+        not_empty(callback)
+
+        if _initialized:
+            callback()
+        else:
+            _initializers.append(callback)
