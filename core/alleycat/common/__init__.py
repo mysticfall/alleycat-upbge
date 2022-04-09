@@ -1,4 +1,5 @@
-from .errors import AlreadyDisposedError, IllegalStateError, InvalidTypeError, NotStartedError
+from .errors import IllegalStateError, InvalidTypeError, NotStartedError
+from .disposable import AlreadyDisposedError, DisposableCollection, DisposableCollector
 from .logging import LoggingSupport
 from .geometry import Point2D
 from .mapping import MapReader

@@ -8,7 +8,3 @@ class IllegalStateError(Exception):
 
 class NotStartedError(IllegalStateError):
     pass
-
-
-class AlreadyDisposedError(IllegalStateError):
-    pass
