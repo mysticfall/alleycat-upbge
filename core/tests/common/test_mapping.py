@@ -28,3 +28,14 @@ def test_require(args: dict):
 
     assert str(config("c", str).swap().unwrap()) == "Missing required argument 'c'."
     assert str(config("a", str).swap().unwrap()) == "Argument 'a' has an invalid value: '1'."
+
+
+def test_mapping(args: dict):
+    configs = MapReader(args)
+
+    assert len(configs) == 2
+
+    assert configs["a"] == 1
+    assert configs["b"] == "B"
+
+    assert configs.keys() == {"a", "b"}

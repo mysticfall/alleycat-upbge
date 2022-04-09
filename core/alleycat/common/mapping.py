@@ -1,43 +1,37 @@
-from typing import Any, Mapping, Type, TypeVar
+from typing import Any, Final, Iterator, Mapping, Type, TypeVar
 
-from returns.maybe import Maybe, Nothing, Some
-from returns.result import Failure, ResultE, Success
-from validator_collection import not_empty
+from returns.maybe import Maybe, Nothing
+from returns.result import Failure, ResultE
+from validator_collection import dict as dict_type, not_empty
+
+from alleycat.common import maybe_type, require_type
 
 T = TypeVar("T")
 
 
-class MapReader:
+class MapReader(Mapping[str, Any]):
+    source: Final[Mapping[str, Any]]
 
-    def __init__(self, args: Mapping[str, Any]):
+    def __init__(self, source: Mapping[str, Any]) -> None:
         super().__init__()
 
-        if args is None:
-            raise ValueError("Argument 'args' is missing.")
-
-        self._source = args
-
-    @property
-    def source(self) -> Mapping[str, Any]:
-        return self._source
+        self.source = dict_type(source, allow_empty=True)
 
     def read(self, key: str, tpe: Type[T]) -> Maybe[T]:
-        if not_empty(key) in self.source:
-            value = self.source[key]
-
-            if isinstance(value, not_empty(tpe)):
-                return Some(value)
-
-        return Nothing
+        return maybe_type(self.source[key], tpe) if not_empty(key) in self.source else Nothing
 
     def require(self, key: str, tpe: Type[T]) -> ResultE[T]:
         if not_empty(key) in self.source:
-            value = self.source[key]
-
-            if value is not None:
-                if not isinstance(value, not_empty(tpe)):
-                    return Failure(ValueError(f"Argument '{key}' has an invalid value: '{value}'."))
-
-                return Success(value)
+            return require_type(self.source[key], tpe).alt(
+                lambda _: ValueError(f"Argument '{key}' has an invalid value: '{self[key]}'."))
 
         return Failure(ValueError(f"Missing required argument '{key}'."))
+
+    def __getitem__(self, key: str):
+        return self.source[key]
+
+    def __len__(self) -> int:
+        return len(self.source)
+
+    def __iter__(self) -> Iterator[Any]:
+        return self.source.__iter__()
