@@ -13,11 +13,11 @@ TState = TypeVar("TState")
 
 class StateManager(BaseProxy, Generic[TState], ABC):
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
-        self._state = RESULT_NOT_STARTED
-        self._state_subject = ReplaySubject[TState](buffer_size=1)
+        self.__state = RESULT_NOT_STARTED
+        self.__state_subject = ReplaySubject[TState](buffer_size=1)
 
     @property
     @abstractmethod
@@ -31,32 +31,32 @@ class StateManager(BaseProxy, Generic[TState], ABC):
     @final
     @property
     def state(self) -> ResultE[TState]:
-        return self._state
+        return self.__state
 
     @property
     def on_state_change(self) -> Observable[TState]:
-        return self._state_subject.pipe(ops.distinct_until_changed())
+        return self.__state_subject.pipe(ops.distinct_until_changed())
 
     def update(self) -> None:
         if not self.valid:
             return
 
-        self._state = self.state.bind(self.next_state)
+        self.__state = self.state.bind(self.next_state)
 
-        if isinstance(self._state, Result.success_type):
-            self._state_subject.on_next(self._state.unwrap())
+        if isinstance(self.__state, Result.success_type):
+            self.__state_subject.on_next(self.__state.unwrap())
         else:
-            self.logger.warning("Failed to update state: %s", self._state.failure())
+            self.logger.warning("Failed to update state: %s", self.__state.failure())
 
     def start(self, args: OrderedDict) -> None:
         super().start(args)
 
-        self._state = self.init_state
+        self.__state = self.init_state
 
     def dispose(self) -> None:
-        self._state_subject.on_completed()
-        self._state_subject.dispose()
+        self.__state_subject.on_completed()
+        self.__state_subject.dispose()
 
-        self._state = RESULT_DISPOSED
+        self.__state = RESULT_DISPOSED
 
         super().dispose()

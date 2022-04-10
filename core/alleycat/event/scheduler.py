@@ -33,25 +33,25 @@ class EventLoopScheduler(Disposable, PeriodicScheduler):
 
         self.logger = getLogger()
 
-        self._queue: PriorityQueue[ScheduledItem] = PriorityQueue()
-        self._init_time = mktime((init_time if init_time else datetime.now()).timetuple())
+        self.__queue: PriorityQueue[ScheduledItem] = PriorityQueue()
+        self.__init_time = mktime((init_time if init_time else datetime.now()).timetuple())
 
         if mode == TimeMode.Frame:
-            self._timer = bge.logic.getFrameTime
+            self.__timer = bge.logic.getFrameTime
         elif mode == TimeMode.Clock:
-            self._timer = bge.logic.getClockTime
+            self.__timer = bge.logic.getClockTime
         elif mode == TimeMode.Real:
-            self._timer = bge.logic.getRealTime
+            self.__timer = bge.logic.getRealTime
         else:
             assert False
 
-        self.logger.info("Creating a scheduler with timer: %s (init_time: %s).", mode.name, self._init_time)
+        self.logger.info("Creating a scheduler with timer: %s (init_time: %s).", mode.name, self.__init_time)
 
-        self._on_process = Subject[datetime]()
+        self.__on_process = Subject[datetime]()
 
     @property
     def now(self) -> datetime:
-        return datetime.fromtimestamp(self._init_time + self._timer())
+        return datetime.fromtimestamp(self.__init_time + self.__timer())
 
     def schedule(self, action: ScheduledAction, state: Optional[TState] = None) -> Disposable:
         return self.schedule_absolute(self.now, action, state)
@@ -70,35 +70,35 @@ class EventLoopScheduler(Disposable, PeriodicScheduler):
                           state: Optional[TState] = None) -> Disposable:
         item = ScheduledItem(self, state, action, self.to_datetime(due))
 
-        self._queue.put(item)
+        self.__queue.put(item)
 
         return Disposable(item.cancel)
 
-    def _peek(self) -> Optional[ScheduledItem]:
-        return None if self._queue.empty() else self._queue.queue[0]
+    def peek(self) -> Optional[ScheduledItem]:
+        return None if self.__queue.empty() else self.__queue.queue[0]
 
     def process(self) -> None:
-        item = self._peek()
+        item = self.peek()
 
         now = self.now
 
-        self._on_process.on_next(now)
+        self.__on_process.on_next(now)
 
         while item and item.duetime <= now:
-            item = self._queue.get()
+            item = self.__queue.get()
 
             if not item.is_cancelled():
                 item.invoke()
 
-            item = self._peek()
+            item = self.peek()
 
     @property
     def on_process(self) -> Observable[datetime]:
-        return self._on_process
+        return self.__on_process
 
     def dispose(self) -> None:
         self.logger.info("Disposing scheduler instance.")
 
-        self._on_process.dispose()
+        self.__on_process.dispose()
 
         super().dispose()
