@@ -4,7 +4,7 @@ from alleycat.core import Bootstrap
 
 
 def test_on_ready():
-    bootstrap = Bootstrap(None)
+    bootstrap = Bootstrap()
 
     count = [0]
 

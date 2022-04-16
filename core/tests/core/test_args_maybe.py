@@ -41,7 +41,7 @@ def test_args():
 
 
 def test_valid():
-    other = KX_GameObject(None)
+    other = KX_GameObject()
     camera = Camera()
 
     args = OrderedDict((

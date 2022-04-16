@@ -50,9 +50,6 @@ def setup_types(module: ModuleType) -> None:
     class KX_GameObject(KX_PythonProxy):
         components: List[KX_PythonProxy] = []
 
-        def __init__(self, *arg):
-            pass
-
     class KX_PythonComponent(KX_PythonProxy):
         pass
 
