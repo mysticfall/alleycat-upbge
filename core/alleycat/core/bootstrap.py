@@ -11,10 +11,9 @@ from validator_collection import not_empty, validators
 
 from alleycat.core import Feature
 
-Initializer = Callable[[], None]
+_initialised = False
 
-_initialized = False
-_initializers: List[Initializer] = []
+_on_ready_callbacks: List[Callable[[], None]] = []
 
 
 class Bootstrap(KX_GameObject):
@@ -58,24 +57,25 @@ class Bootstrap(KX_GameObject):
         # noinspection SpellCheckingInspection
         sys.excepthook = except_hook
 
-        for callback in _initializers:
+        for callback in _on_ready_callbacks:
             try:
                 callback()
             except Exception as e:
                 self.logger.exception(e, exc_info=True)
 
-        global _initialized
+        global _initialised
 
-        _initialized = True
-        _initializers.clear()
+        _initialised = True
+
+        _on_ready_callbacks.clear()
 
         self.logger.info("Bootstrap has completed successfully.")
 
     @staticmethod
-    def when_ready(callback: Initializer) -> None:
+    def when_ready(callback: Callable[[], None]) -> None:
         not_empty(callback)
 
-        if _initialized:
+        if _initialised:
             callback()
         else:
-            _initializers.append(callback)
+            _on_ready_callbacks.append(callback)

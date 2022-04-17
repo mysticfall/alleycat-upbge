@@ -1,23 +1,19 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import ABC
 from collections import OrderedDict
 from functools import partial
 from typing import Any, Callable, Final, Optional, Tuple, Type, Union, get_type_hints
 
 from returns.maybe import Maybe, Nothing
 from returns.primitives.exceptions import UnwrapFailedError
-from returns.result import Failure, Result, ResultE
+from returns.result import Failure, Result
 
 from alleycat.common.validators import require_type
+from alleycat.lifecycle import Startable
 
 
-class ArgumentsHolder(ABC):
-
-    @property
-    @abstractmethod
-    def start_args(self) -> ResultE[OrderedDict]:
-        pass
+class ArgumentsHolder(Startable, ABC):
 
     def __init_subclass__(cls, **kwargs) -> None:
         get_descriptor = partial(getattr, cls)

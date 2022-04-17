@@ -6,12 +6,13 @@ from reactivex import Observable, operators as ops
 from reactivex.subject import ReplaySubject
 from returns.result import Result, ResultE
 
-from alleycat.core import BaseProxy, RESULT_DISPOSED, RESULT_NOT_STARTED
+from alleycat.common import LoggingSupport
+from alleycat.lifecycle import RESULT_DISPOSED, RESULT_NOT_STARTED, Startable, Updatable
 
 TState = TypeVar("TState")
 
 
-class StateManager(BaseProxy, Generic[TState], ABC):
+class StateManager(Startable, Updatable, LoggingSupport, Generic[TState], ABC):
 
     def __init__(self) -> None:
         super().__init__()
@@ -37,10 +38,7 @@ class StateManager(BaseProxy, Generic[TState], ABC):
     def on_state_change(self) -> Observable[TState]:
         return self.__state_subject.pipe(ops.distinct_until_changed())
 
-    def update(self) -> None:
-        if not self.valid:
-            return
-
+    def _do_update(self) -> None:
         self.__state = self.state.bind(self.next_state)
 
         if isinstance(self.__state, Result.success_type):

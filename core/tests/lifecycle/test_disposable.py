@@ -2,7 +2,7 @@ from pytest import raises
 from reactivex import Subject
 from reactivex.disposable import Disposable
 
-from alleycat.common import AlreadyDisposedError, DisposableCollection, DisposableCollector
+from alleycat.lifecycle import AlreadyDisposedError, BaseDisposable, DisposableCollection
 
 
 class FaultySubject(Subject[str]):
@@ -34,7 +34,7 @@ def test_disposable_collection():
 
 
 def test_disposable_collector():
-    class TestCollector(DisposableCollector):
+    class TestCollector(BaseDisposable):
         def __init__(self) -> None:
             super().__init__()
 
@@ -44,8 +44,8 @@ def test_disposable_collector():
             self.subject2 = Subject()
             self.subject3 = Subject()
 
-            self._subscribe(self.subject1, self.result.append)
-            self._subscribe(self.subject2, self.result.append)
+            self._subscribe_until_dispose(self.subject1, self.result.append)
+            self._subscribe_until_dispose(self.subject2, self.result.append)
 
             self._disposables.append(self.subject3)
 
@@ -80,3 +80,30 @@ def test_disposable_collector():
 
     with raises(AlreadyDisposedError):
         collector.dispose()
+
+
+def test_base_disposable():
+    class TestDisposable(BaseDisposable):
+        pass
+
+    disposable = TestDisposable()
+
+    events = []
+
+    disposable.on_dispose.subscribe(events.append)
+
+    assert not disposable.is_disposed
+    assert len(events) == 0
+
+    disposable._check_disposed()
+
+    disposable.dispose()
+
+    assert disposable.is_disposed
+    assert len(events) == 1
+
+    with raises(AlreadyDisposedError):
+        disposable._check_disposed()
+
+    with raises(AlreadyDisposedError):
+        disposable.dispose()

@@ -4,9 +4,18 @@ from bge.types import KX_GameObject
 from bpy.types import Camera
 from returns.result import ResultE, Success
 
-from alleycat.common import AlreadyDisposedError, InvalidTypeError, NotStartedError
-from alleycat.core import BaseComponent, arg
+from alleycat.common import InvalidTypeError
+from alleycat.core import BaseComponent, arg, bootstrap
+from alleycat.lifecycle import RESULT_DISPOSED, RESULT_NOT_STARTED
 from alleycat.test import assert_failure
+
+
+def setup():
+    bootstrap._initialised = True
+
+
+def teardown():
+    bootstrap._initialised = False
 
 
 class TestComp(BaseComponent):
@@ -57,7 +66,7 @@ def test_success():
 
     comp = TestComp()
 
-    comp.assert_failure(NotStartedError("The proxy has not been started yet."))
+    comp.assert_failure(RESULT_NOT_STARTED.failure())
     comp.start(args)
 
     assert comp.string_value == Success("DEF")
@@ -68,7 +77,7 @@ def test_success():
     assert comp.data_value == Success(camera)
 
     comp.dispose()
-    comp.assert_failure(AlreadyDisposedError("The proxy instance has been disposed already."))
+    comp.assert_failure(RESULT_DISPOSED.failure())
 
 
 def test_empty():
@@ -83,7 +92,7 @@ def test_empty():
 
     comp = TestComp()
 
-    comp.assert_failure(NotStartedError("The proxy has not been started yet."))
+    comp.assert_failure(RESULT_NOT_STARTED.failure())
     comp.start(args)
 
     assert_failure(comp.string_value, ValueError("Missing required argument 'String Value'."))
@@ -94,7 +103,7 @@ def test_empty():
     assert_failure(comp.data_value, ValueError("Missing required argument 'Data Value'."))
 
     comp.dispose()
-    comp.assert_failure(AlreadyDisposedError("The proxy instance has been disposed already."))
+    comp.assert_failure(RESULT_DISPOSED.failure())
 
 
 def test_invalid():
@@ -109,7 +118,7 @@ def test_invalid():
 
     comp = TestComp()
 
-    comp.assert_failure(NotStartedError("The proxy has not been started yet."))
+    comp.assert_failure(RESULT_NOT_STARTED.failure())
     comp.start(args)
 
     error = InvalidTypeError
@@ -122,4 +131,4 @@ def test_invalid():
     assert_failure(comp.data_value, error("Value 1.2 is not of expected type 'Camera' (actual: 'float')."))
 
     comp.dispose()
-    comp.assert_failure(AlreadyDisposedError("The proxy instance has been disposed already."))
+    comp.assert_failure(RESULT_DISPOSED.failure())

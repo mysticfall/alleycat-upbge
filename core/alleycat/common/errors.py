@@ -4,7 +4,3 @@ class InvalidTypeError(ValueError):
 
 class IllegalStateError(Exception):
     pass
-
-
-class NotStartedError(IllegalStateError):
-    pass

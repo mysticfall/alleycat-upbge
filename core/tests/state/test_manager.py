@@ -2,8 +2,17 @@ from collections import OrderedDict
 
 from returns.result import Result, ResultE, Success
 
-from alleycat.core import BaseObject, RESULT_DISPOSED, RESULT_NOT_STARTED
+from alleycat.core import BaseObject, bootstrap
+from alleycat.lifecycle import RESULT_DISPOSED, RESULT_NOT_STARTED
 from alleycat.state import StateManager
+
+
+def setup():
+    bootstrap._initialised = True
+
+
+def teardown():
+    bootstrap._initialised = False
 
 
 def test_state():

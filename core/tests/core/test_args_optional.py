@@ -4,7 +4,15 @@ from typing import Optional
 from bge.types import KX_GameObject
 from bpy.types import Camera
 
-from alleycat.core import BaseComponent, arg
+from alleycat.core import BaseComponent, arg, bootstrap
+
+
+def setup():
+    bootstrap._initialised = True
+
+
+def teardown():
+    bootstrap._initialised = False
 
 
 class TestComp(BaseComponent):

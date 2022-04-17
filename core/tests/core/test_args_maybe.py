@@ -4,7 +4,15 @@ from bge.types import KX_GameObject
 from bpy.types import Camera
 from returns.maybe import Maybe, Nothing, Some
 
-from alleycat.core import BaseComponent, arg
+from alleycat.core import BaseComponent, arg, bootstrap
+
+
+def setup():
+    bootstrap._initialised = True
+
+
+def teardown():
+    bootstrap._initialised = False
 
 
 class TestComp(BaseComponent):
@@ -40,7 +48,7 @@ def test_args():
     }
 
 
-def test_valid():
+def test_success():
     other = KX_GameObject()
     camera = Camera()
 
