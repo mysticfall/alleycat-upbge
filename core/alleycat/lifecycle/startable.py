@@ -5,7 +5,7 @@ from reactivex import Observable, Subject
 from returns.result import Result, ResultE
 from validator_collection import dict as dict_type
 
-from alleycat.common import IllegalStateError
+from alleycat.common import IllegalStateError, MapReader
 from alleycat.lifecycle import BaseDisposable, RESULT_DISPOSED
 
 
@@ -20,15 +20,13 @@ class AlreadyStartedError(IllegalStateError):
 RESULT_NOT_STARTED: Final = Result.from_failure(
     NotStartedError("The object has not been started yet."))
 
-ArgsType = OrderedDict[str, Any]
-
 
 class Startable(BaseDisposable, ABC):
     def __init__(self) -> None:
         super().__init__()
 
         self.__started = False
-        self.__start_args: ResultE[ArgsType] = RESULT_NOT_STARTED
+        self.__start_args: ResultE[MapReader] = RESULT_NOT_STARTED
         self.__on_start = Subject[None]()
 
     @final
@@ -43,14 +41,14 @@ class Startable(BaseDisposable, ABC):
 
     @final
     @property
-    def start_args(self) -> ResultE[ArgsType]:
+    def start_args(self) -> ResultE[MapReader]:
         return self.__start_args
 
     def start(self, args: OrderedDict[str, Any]) -> None:
         if self.__started:
             raise AlreadyStartedError("The object has already started.")
 
-        self.__start_args = Result.from_value(dict_type(args, allow_empty=True))
+        self.__start_args = Result.from_value(MapReader(dict_type(args, allow_empty=True)))
 
         self._do_start()
 

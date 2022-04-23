@@ -1,6 +1,7 @@
 from typing import Any, OrderedDict
 
 from pytest import raises
+from returns.result import Result, Success
 
 from alleycat.lifecycle import AlreadyStartedError, NotStartedError, Startable
 
@@ -27,7 +28,7 @@ def test_startable():
     with raises(NotStartedError):
         startable._check_started()
 
-    startable.start(OrderedDict[str, Any](()))
+    startable.start(OrderedDict[str, Any]((("Test Property", 123),)))
 
     assert startable.started
     assert startable.do_start_invoked
@@ -37,3 +38,9 @@ def test_startable():
 
     with raises(AlreadyStartedError):
         startable.start(OrderedDict[str, Any](()))
+
+    assert type(startable.start_args) == Result.success_type
+
+    args = startable.start_args.unwrap()
+
+    assert args.require("Test Property", int) == Success(123)

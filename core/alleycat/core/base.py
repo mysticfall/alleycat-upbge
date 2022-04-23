@@ -1,6 +1,6 @@
 from abc import ABC
-from collections import OrderedDict
 from functools import partial
+from typing import Any, OrderedDict
 
 from bge.types import KX_GameObject, KX_PythonComponent
 
@@ -10,7 +10,7 @@ from alleycat.core import ArgumentsHolder, Bootstrap
 
 class BaseProxy(ArgumentsHolder, LoggingSupport, ABC):
 
-    def start(self, args: OrderedDict) -> None:
+    def start(self, args: OrderedDict[str, Any]) -> None:
         Bootstrap.when_ready(partial(super().start, args))
 
 
