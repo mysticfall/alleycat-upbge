@@ -4,7 +4,7 @@ from returns.maybe import Maybe, Nothing
 from returns.result import Failure, ResultE
 from validator_collection import dict as dict_type, not_empty
 
-from alleycat.common import maybe_type, require_type
+from alleycat.common import InvalidTypeError, maybe_type, require_type
 
 T = TypeVar("T")
 
@@ -27,7 +27,7 @@ class MapReader(Mapping[str, Any]):
             return Failure(ValueError(f"Missing required argument '{key}'."))
 
         return require_type(self.source[key], tpe).alt(
-            lambda _: ValueError(f"Argument '{key}' has an invalid value: '{self[key]}'."))
+            lambda _: InvalidTypeError(f"Argument '{key}' has an invalid value: '{self[key]}'."))
 
     def __getitem__(self, key: str):
         return self.source[key]
