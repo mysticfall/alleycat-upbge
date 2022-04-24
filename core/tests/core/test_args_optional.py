@@ -4,7 +4,7 @@ from typing import Optional
 from bge.types import KX_GameObject
 from bpy.types import Camera
 
-from alleycat.core import BaseComponent, arg, bootstrap
+from alleycat.core import BaseComponent, game_property, bootstrap
 
 
 def setup():
@@ -16,17 +16,17 @@ def teardown():
 
 
 class TestComp(BaseComponent):
-    string_value: Optional[str] = arg("ABC")
+    string_value: Optional[str] = game_property("ABC")
 
-    bool_value: Optional[bool] = arg(True)
+    bool_value: Optional[bool] = game_property(True)
 
-    int_value: Optional[int] = arg(123)
+    int_value: Optional[int] = game_property(123)
 
-    float_value: Optional[float] = arg(1.2)
+    float_value: Optional[float] = game_property(1.2)
 
-    object_value: Optional[KX_GameObject] = arg(KX_GameObject)
+    object_value: Optional[KX_GameObject] = game_property(KX_GameObject)
 
-    data_value: Optional[Camera] = arg(Camera)
+    data_value: Optional[Camera] = game_property(Camera)
 
     def assert_is_none(self):
         assert self.string_value is None

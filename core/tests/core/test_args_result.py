@@ -5,7 +5,7 @@ from bpy.types import Camera
 from returns.result import ResultE, Success
 
 from alleycat.common import InvalidTypeError
-from alleycat.core import BaseComponent, arg, bootstrap
+from alleycat.core import BaseComponent, bootstrap, game_property
 from alleycat.lifecycle import RESULT_DISPOSED, RESULT_NOT_STARTED
 from alleycat.test import assert_failure
 
@@ -19,17 +19,17 @@ def teardown():
 
 
 class TestComp(BaseComponent):
-    string_value: ResultE[str] = arg("ABC")
+    string_value: ResultE[str] = game_property("ABC")
 
-    bool_value: ResultE[bool] = arg(True)
+    bool_value: ResultE[bool] = game_property(True)
 
-    int_value: ResultE[int] = arg(123)
+    int_value: ResultE[int] = game_property(123)
 
-    float_value: ResultE[float] = arg(1.2)
+    float_value: ResultE[float] = game_property(1.2)
 
-    object_value: ResultE[KX_GameObject] = arg(KX_GameObject)
+    object_value: ResultE[KX_GameObject] = game_property(KX_GameObject)
 
-    data_value: ResultE[Camera] = arg(Camera)
+    data_value: ResultE[Camera] = game_property(Camera)
 
     def assert_failure(self, error: Exception) -> None:
         assert_failure(self.string_value, error)
@@ -123,12 +123,12 @@ def test_invalid():
 
     error = InvalidTypeError
 
-    assert_failure(comp.string_value, error("Value True is not of expected type 'str' (actual: 'bool')."))
-    assert_failure(comp.bool_value, error("Value 123 is not of expected type 'bool' (actual: 'int')."))
-    assert_failure(comp.int_value, error("Value ABC is not of expected type 'int' (actual: 'str')."))
-    assert_failure(comp.float_value, error("Value {} is not of expected type 'float' (actual: 'dict')."))
-    assert_failure(comp.object_value, error("Value [] is not of expected type 'KX_GameObject' (actual: 'list')."))
-    assert_failure(comp.data_value, error("Value 1.2 is not of expected type 'Camera' (actual: 'float')."))
+    assert_failure(comp.string_value, error("Argument 'String Value' has an invalid value: 'True'."))
+    assert_failure(comp.bool_value, error("Argument 'Bool Value' has an invalid value: '123'."))
+    assert_failure(comp.int_value, error("Argument 'Int Value' has an invalid value: 'ABC'."))
+    assert_failure(comp.float_value, error("Argument 'Float Value' has an invalid value: '{}'."))
+    assert_failure(comp.object_value, error("Argument 'Object Value' has an invalid value: '[]'."))
+    assert_failure(comp.data_value, error("Argument 'Data Value' has an invalid value: '1.2'."))
 
     comp.dispose()
     comp.assert_failure(RESULT_DISPOSED.failure())

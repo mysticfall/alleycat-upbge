@@ -6,7 +6,7 @@ from bpy.types import Camera
 from pytest import raises
 
 from alleycat.common import InvalidTypeError
-from alleycat.core import BaseComponent, arg, bootstrap
+from alleycat.core import BaseComponent, bootstrap, game_property
 from alleycat.lifecycle import RESULT_DISPOSED, RESULT_NOT_STARTED
 
 
@@ -24,17 +24,17 @@ def teardown():
 
 
 class TestComp(BaseComponent):
-    string_value: str = arg("ABC")
+    string_value: str = game_property("ABC")
 
-    bool_value: bool = arg(True)
+    bool_value: bool = game_property(True)
 
-    int_value: int = arg(123)
+    int_value: int = game_property(123)
 
-    float_value: float = arg(1.2)
+    float_value: float = game_property(1.2)
 
-    object_value: KX_GameObject = arg(KX_GameObject)
+    object_value: KX_GameObject = game_property(KX_GameObject)
 
-    data_value: Camera = arg(Camera)
+    data_value: Camera = game_property(Camera)
 
     def assert_exception(self, error: Exception) -> None:
         assert_exception(self, "string_value", error)
@@ -48,6 +48,23 @@ class TestComp(BaseComponent):
 def test_args():
     assert set(TestComp.args.items()) == {
         ("String Value", "ABC"),
+        ("Bool Value", True),
+        ("Int Value", 123),
+        ("Float Value", 1.2),
+        ("Object Value", KX_GameObject),
+        ("Data Value", Camera)
+    }
+
+
+def test_inherited_args():
+    class ParentComp(TestComp):
+        string_value: str = game_property("DEF")
+
+        string_value2: str = game_property("GHI")
+
+    assert set(ParentComp.args.items()) == {
+        ("String Value", "DEF"),
+        ("String Value2", "GHI"),
         ("Bool Value", True),
         ("Int Value", 123),
         ("Float Value", 1.2),
@@ -128,12 +145,12 @@ def test_invalid():
 
     error = InvalidTypeError
 
-    assert_exception(comp, "string_value", error("Value True is not of expected type 'str' (actual: 'bool')."))
-    assert_exception(comp, "bool_value", error("Value 123 is not of expected type 'bool' (actual: 'int')."))
-    assert_exception(comp, "int_value", error("Value ABC is not of expected type 'int' (actual: 'str')."))
-    assert_exception(comp, "float_value", error("Value {} is not of expected type 'float' (actual: 'dict')."))
-    assert_exception(comp, "object_value", error("Value [] is not of expected type 'KX_GameObject' (actual: 'list')."))
-    assert_exception(comp, "data_value", error("Value 1.2 is not of expected type 'Camera' (actual: 'float')."))
+    assert_exception(comp, "string_value", error("Argument 'String Value' has an invalid value: 'True'."))
+    assert_exception(comp, "bool_value", error("Argument 'Bool Value' has an invalid value: '123'."))
+    assert_exception(comp, "int_value", error("Argument 'Int Value' has an invalid value: 'ABC'."))
+    assert_exception(comp, "float_value", error("Argument 'Float Value' has an invalid value: '{}'."))
+    assert_exception(comp, "object_value", error("Argument 'Object Value' has an invalid value: '[]'."))
+    assert_exception(comp, "data_value", error("Argument 'Data Value' has an invalid value: '1.2'."))
 
     comp.dispose()
     comp.assert_exception(RESULT_DISPOSED.failure())

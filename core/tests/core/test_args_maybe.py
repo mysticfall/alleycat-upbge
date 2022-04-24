@@ -4,7 +4,7 @@ from bge.types import KX_GameObject
 from bpy.types import Camera
 from returns.maybe import Maybe, Nothing, Some
 
-from alleycat.core import BaseComponent, arg, bootstrap
+from alleycat.core import BaseComponent, game_property, bootstrap
 
 
 def setup():
@@ -16,17 +16,17 @@ def teardown():
 
 
 class TestComp(BaseComponent):
-    string_value: Maybe[str] = arg("ABC")
+    string_value: Maybe[str] = game_property("ABC")
 
-    bool_value: Maybe[bool] = arg(True)
+    bool_value: Maybe[bool] = game_property(True)
 
-    int_value: Maybe[int] = arg(123)
+    int_value: Maybe[int] = game_property(123)
 
-    float_value: Maybe[float] = arg(1.2)
+    float_value: Maybe[float] = game_property(1.2)
 
-    object_value: Maybe[KX_GameObject] = arg(KX_GameObject)
+    object_value: Maybe[KX_GameObject] = game_property(KX_GameObject)
 
-    data_value: Maybe[Camera] = arg(Camera)
+    data_value: Maybe[Camera] = game_property(Camera)
 
     def assert_nothing(self) -> None:
         assert self.string_value == Nothing

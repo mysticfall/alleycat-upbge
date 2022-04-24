@@ -5,10 +5,10 @@ from typing import Any, OrderedDict
 from bge.types import KX_GameObject, KX_PythonComponent
 
 from alleycat.common import LoggingSupport
-from alleycat.core import ArgumentsHolder, Bootstrap
+from alleycat.core import Bootstrap, PropertyHolder
 
 
-class BaseProxy(ArgumentsHolder, LoggingSupport, ABC):
+class BaseProxy(PropertyHolder, LoggingSupport, ABC):
 
     def start(self, args: OrderedDict[str, Any]) -> None:
         Bootstrap.when_ready(partial(super().start, args))
