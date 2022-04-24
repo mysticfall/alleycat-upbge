@@ -21,11 +21,13 @@ class MapReader(Mapping[str, Any]):
         return maybe_type(self.source[key], tpe) if not_empty(key) in self.source else Nothing
 
     def require(self, key: str, tpe: Type[T]) -> ResultE[T]:
-        if not_empty(key) in self.source:
-            return require_type(self.source[key], tpe).alt(
-                lambda _: ValueError(f"Argument '{key}' has an invalid value: '{self[key]}'."))
+        value = self.source[key] if not_empty(key) in self.source else None
 
-        return Failure(ValueError(f"Missing required argument '{key}'."))
+        if value is None:
+            return Failure(ValueError(f"Missing required argument '{key}'."))
+
+        return require_type(self.source[key], tpe).alt(
+            lambda _: ValueError(f"Argument '{key}' has an invalid value: '{self[key]}'."))
 
     def __getitem__(self, key: str):
         return self.source[key]
