@@ -7,9 +7,18 @@ from bge.types import SCA_PythonMouse
 from returns.result import Result
 
 from alleycat.common import Point2D
+from alleycat.core import bootstrap
 from alleycat.input import MouseButton, MouseDownEvent, MouseInputSource, MouseMoveEvent, MouseState, MouseUpEvent
 from alleycat.lifecycle import RESULT_DISPOSED, RESULT_NOT_STARTED
 from alleycat.test.mock_bge import SCA_InputEvent
+
+
+def setup():
+    bootstrap._initialised = True
+
+
+def teardown():
+    bootstrap._initialised = False
 
 
 @fixture
