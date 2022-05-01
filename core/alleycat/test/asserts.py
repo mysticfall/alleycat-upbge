@@ -1,5 +1,6 @@
 from typing import Any
 
+from returns.pipeline import is_successful
 from returns.result import Result
 
 
@@ -9,7 +10,7 @@ def assert_success(actual: Result[..., ...], expected: Any) -> None:
 
 def assert_failure(actual: Result[..., ...], expected: Any) -> None:
     if isinstance(expected, Exception):
-        if isinstance(actual, Result.success_type):
+        if is_successful(actual):
             raise AssertionError(f"Expected a failure but got {actual}.")
 
         failure = actual.failure()

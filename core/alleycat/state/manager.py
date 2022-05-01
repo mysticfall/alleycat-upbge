@@ -4,7 +4,8 @@ from typing import Generic, TypeVar, final
 
 from reactivex import Observable, operators as ops
 from reactivex.subject import ReplaySubject
-from returns.result import Result, ResultE
+from returns.pipeline import is_successful
+from returns.result import ResultE
 
 from alleycat.common import LoggingSupport
 from alleycat.lifecycle import RESULT_DISPOSED, RESULT_NOT_STARTED, Startable, Updatable
@@ -41,7 +42,7 @@ class StateManager(Startable, Updatable, LoggingSupport, Generic[TState], ABC):
     def _do_update(self) -> None:
         self.__state = self.state.bind(self.next_state)
 
-        if isinstance(self.__state, Result.success_type):
+        if is_successful(self.__state):
             self.__state_subject.on_next(self.__state.unwrap())
         else:
             self.logger.warning("Failed to update state: %s", self.__state.failure())

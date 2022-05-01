@@ -1,7 +1,8 @@
 from typing import Any, OrderedDict
 
 from pytest import raises
-from returns.result import Result, Success
+from returns.pipeline import is_successful
+from returns.result import Success
 
 from alleycat.lifecycle import AlreadyStartedError, NotStartedError, Startable
 
@@ -39,7 +40,7 @@ def test_startable():
     with raises(AlreadyStartedError):
         startable.start(OrderedDict[str, Any](()))
 
-    assert type(startable.start_args) == Result.success_type
+    assert is_successful(startable.start_args)
 
     args = startable.start_args.unwrap()
 

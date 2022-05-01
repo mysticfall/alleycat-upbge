@@ -2,9 +2,9 @@ from typing import Any, Final, Iterator, Mapping, Type, TypeVar
 
 from returns.maybe import Maybe, Nothing
 from returns.result import Failure, ResultE
-from validator_collection import dict as dict_type, not_empty
+from validator_collection import not_empty
 
-from alleycat.common import InvalidTypeError, maybe_type, require_type
+from alleycat.common import InvalidTypeError, maybe_type, of_type, require_type
 
 T = TypeVar("T")
 
@@ -12,10 +12,12 @@ T = TypeVar("T")
 class MapReader(Mapping[str, Any]):
     source: Final[Mapping[str, Any]]
 
+    __slots__ = ("source",)
+
     def __init__(self, source: Mapping[str, Any]) -> None:
         super().__init__()
 
-        self.source = dict_type(source, allow_empty=True)
+        self.source = of_type(source, dict)
 
     def read(self, key: str, tpe: Type[T]) -> Maybe[T]:
         return maybe_type(self.source[key], tpe) if not_empty(key) in self.source else Nothing
@@ -37,3 +39,9 @@ class MapReader(Mapping[str, Any]):
 
     def __iter__(self) -> Iterator[Any]:
         return self.source.__iter__()
+
+    def __str__(self) -> str:
+        return self.source.__str__()
+
+    def __repr__(self) -> str:
+        return self.source.__repr__()
