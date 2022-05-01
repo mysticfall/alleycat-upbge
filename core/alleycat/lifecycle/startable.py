@@ -2,10 +2,9 @@ from abc import ABC
 from typing import Any, Final, OrderedDict, final
 
 from reactivex import Observable, Subject
-from returns.result import Result, ResultE
-from validator_collection import dict as dict_type
+from returns.result import Failure, Result, ResultE, Success
 
-from alleycat.common import IllegalStateError, MapReader
+from alleycat.common import IllegalStateError, MapReader, of_type
 from alleycat.lifecycle import BaseDisposable, RESULT_DISPOSED
 
 
@@ -27,7 +26,7 @@ class Startable(BaseDisposable, ABC):
 
         self.__started = False
         self.__start_args: ResultE[MapReader] = RESULT_NOT_STARTED
-        self.__on_start = Subject[None]()
+        self.__on_start = Subject[MapReader]()
 
     @final
     @property
@@ -36,7 +35,7 @@ class Startable(BaseDisposable, ABC):
 
     @final
     @property
-    def on_start(self) -> Observable[None]:
+    def on_start(self) -> Observable[MapReader]:
         return self.__on_start
 
     @final
@@ -48,15 +47,17 @@ class Startable(BaseDisposable, ABC):
         if self.__started:
             raise AlreadyStartedError("The object has already started.")
 
-        self.__start_args = Result.from_value(MapReader(dict_type(args, allow_empty=True)))
-
-        self._do_start()
-
+        self.__start_args = self._do_start(MapReader(of_type(args, dict)))
         self.__started = True
-        self.__on_start.on_next(None)
 
-    def _do_start(self) -> None:
-        pass
+        match self.__start_args:
+            case Success(v):
+                self.__on_start.on_next(v)
+            case Failure(e):
+                self.__on_start.on_error(e)
+
+    def _do_start(self, args: MapReader) -> ResultE[MapReader]:
+        return Result.from_value(args)
 
     @final
     def _check_started(self) -> None:
@@ -66,7 +67,9 @@ class Startable(BaseDisposable, ABC):
     def dispose(self) -> None:
         super().dispose()
 
-        self.__on_start.on_completed()
+        if self.__on_start.exception is None:
+            self.__on_start.on_completed()
+
         self.__on_start.dispose()
 
         self.__start_args = RESULT_DISPOSED
