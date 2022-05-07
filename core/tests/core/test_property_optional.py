@@ -1,10 +1,28 @@
+import re
 from collections import OrderedDict
 from typing import Optional
 
 from bge.types import KX_GameObject
 from bpy.types import Camera
+from pytest import mark, raises
 
-from alleycat.core import BaseComponent, game_property, bootstrap
+from alleycat.common import InvalidTypeError
+from alleycat.core import BaseComponent, bootstrap, game_property
+from alleycat.lifecycle import AlreadyDisposedError, NotStartedError, RESULT_DISPOSED, RESULT_NOT_STARTED
+
+property_names = (
+    "string_value",
+    "bool_value",
+    "int_value",
+    "float_value",
+    "object_value",
+    "data_value"
+)
+
+
+def assert_exception(obj, attr: str, expected: Exception) -> None:
+    with raises(type(expected), match=re.escape(expected.args[0])):
+        assert getattr(obj, attr)
 
 
 def setup():
@@ -28,13 +46,9 @@ class TestComp(BaseComponent):
 
     data_value: Optional[Camera] = game_property(Camera)
 
-    def assert_is_none(self):
-        assert self.string_value is None
-        assert self.bool_value is None
-        assert self.int_value is None
-        assert self.float_value is None
-        assert self.object_value is None
-        assert self.data_value is None
+    def assert_exception(self, error: Exception) -> None:
+        for name in property_names:
+            assert_exception(self, name, error)
 
 
 def test_args():
@@ -61,10 +75,16 @@ def test_success():
         ("Data Value", camera),
     ))
 
+    events = []
+    errors = []
+
     comp = TestComp()
 
-    comp.assert_is_none()
+    comp.assert_exception(RESULT_NOT_STARTED.failure())
     comp.start(args)
+
+    comp.on_property_change("string_value").subscribe(events.append, on_error=errors.append)
+    comp.on_property_change("int_value").subscribe(events.append, on_error=errors.append)
 
     assert comp.string_value == "DEF"
     assert comp.bool_value is False
@@ -73,47 +93,206 @@ def test_success():
     assert comp.object_value == other
     assert comp.data_value == camera
 
+    assert events == ["DEF", 321]
+    assert errors == []
+
     comp.dispose()
-    comp.assert_is_none()
+    comp.assert_exception(RESULT_DISPOSED.failure())
 
 
-def test_empty():
+@mark.parametrize("name", property_names)
+def test_empty(name: str):
     args = OrderedDict((
         ("String Value", None),
         ("Bool Value", None),
         ("Int Value", None),
         ("Float Value", None),
         ("Object Value", None),
-        ("Data Value", None),
+        ("Data Value", None)
     ))
+
+    events = []
+    errors = []
 
     comp = TestComp()
 
-    comp.assert_is_none()
+    comp.assert_exception(RESULT_NOT_STARTED.failure())
     comp.start(args)
 
-    comp.assert_is_none()
+    comp.on_property_change("string_value").subscribe(events.append, on_error=errors.append)
+    comp.on_property_change("int_value").subscribe(events.append, on_error=errors.append)
+
+    assert comp.string_value is None
+    assert comp.bool_value is None
+    assert comp.int_value is None
+    assert comp.float_value is None
+    assert comp.object_value is None
+    assert comp.data_value is None
+
+    assert events == [None, None]
+    assert errors == []
 
     comp.dispose()
-    comp.assert_is_none()
+    comp.assert_exception(RESULT_DISPOSED.failure())
 
 
-def test_invalid():
+@mark.parametrize("name", property_names)
+def test_invalid(name: str):
     args = OrderedDict((
         ("String Value", True),
         ("Bool Value", 123),
         ("Int Value", "ABC"),
         ("Float Value", dict()),
         ("Object Value", list()),
-        ("Data Value", 1.2),
+        ("Data Value", 1.2)
+    ))
+
+    events = []
+    errors = []
+
+    comp = TestComp()
+
+    comp.assert_exception(RESULT_NOT_STARTED.failure())
+    comp.start(args)
+
+    comp.on_property_change("string_value").subscribe(events.append, on_error=errors.append)
+    comp.on_property_change("int_value").subscribe(events.append, on_error=errors.append)
+
+    assert comp.string_value is None
+    assert comp.bool_value is None
+    assert comp.int_value is None
+    assert comp.float_value is None
+    assert comp.object_value is None
+    assert comp.data_value is None
+
+    assert events == [None, None]
+    assert errors == []
+
+    comp.dispose()
+    comp.assert_exception(RESULT_DISPOSED.failure())
+
+
+def test_update():
+    other = KX_GameObject()
+    camera = Camera()
+
+    args = OrderedDict((
+        ("String Value", "DEF"),
+        ("Bool Value", False),
+        ("Int Value", 321),
+        ("Float Value", 1.5),
+        ("Object Value", other),
+        ("Data Value", camera),
     ))
 
     comp = TestComp()
 
-    comp.assert_is_none()
+    events = []
+    errors = []
+
+    comp.on_property_change("string_value").subscribe(events.append, on_error=errors.append)
+    comp.on_property_change("int_value").subscribe(events.append, on_error=errors.append)
+
+    with raises(NotStartedError):
+        comp.string_value = "DEF"
+
+    with raises(NotStartedError):
+        comp.int_value = 321
+
     comp.start(args)
 
-    comp.assert_is_none()
+    assert comp.string_value == "DEF"
+    assert comp.int_value == 321
+
+    assert events == ["DEF", 321]
+    assert errors == []
+
+    comp.string_value = "ABC"
+
+    assert comp.string_value == "ABC"
+    assert comp.int_value == 321
+
+    assert events == ["DEF", 321, "ABC"]
+    assert errors == []
+
+    comp.string_value = None
+    comp.int_value = None
+
+    assert comp.string_value is None
+    assert comp.int_value is None
+
+    assert events == ["DEF", 321, "ABC", None, None]
+    assert errors == []
+
+    with raises(InvalidTypeError):
+        comp.string_value = 123
+
+    with raises(InvalidTypeError):
+        comp.int_value = "ABC"
 
     comp.dispose()
-    comp.assert_is_none()
+
+    with raises(AlreadyDisposedError):
+        comp.string_value = "DEF"
+
+    with raises(AlreadyDisposedError):
+        comp.int_value = 321
+
+
+def test_inheritance():
+    other = KX_GameObject()
+    camera = Camera()
+
+    class ChildComp(TestComp):
+        string_value: Optional[str] = game_property("DEF")
+
+        new_value: Optional[str] = game_property("GHI")
+
+    assert set(ChildComp.args.items()) == {
+        ("String Value", "DEF"),
+        ("New Value", "GHI"),
+        ("Bool Value", True),
+        ("Int Value", 123),
+        ("Float Value", 1.2),
+        ("Object Value", KX_GameObject),
+        ("Data Value", Camera)
+    }
+
+    args = OrderedDict((
+        ("String Value", "def"),
+        ("New Value", None),
+        ("Bool Value", False),
+        ("Int Value", 321),
+        ("Float Value", 1.5),
+        ("Object Value", other),
+        ("Data Value", camera),
+    ))
+
+    comp = ChildComp()
+
+    events = []
+    errors = []
+
+    comp.on_property_change("string_value").subscribe(events.append, on_error=errors.append)
+    comp.on_property_change("new_value").subscribe(events.append, on_error=errors.append)
+    comp.on_property_change("int_value").subscribe(events.append, on_error=errors.append)
+
+    comp.start(args)
+
+    assert comp.string_value == "def"
+    assert comp.new_value is None
+    assert comp.int_value == 321
+
+    assert events == ["def", None, 321]
+    assert errors == []
+
+    comp.string_value = None
+    comp.new_value = "GHI"
+    comp.int_value = None
+
+    assert comp.string_value is None
+    assert comp.new_value == "GHI"
+    assert comp.int_value is None
+
+    assert events == ["def", None, 321, None, "GHI", None]
+    assert errors == []

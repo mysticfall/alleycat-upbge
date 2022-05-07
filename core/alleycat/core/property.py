@@ -2,34 +2,81 @@ from __future__ import annotations
 
 from abc import ABC
 from functools import partial
-from typing import Any, Dict, Final, Generic, Mapping, Optional, OrderedDict, Type, TypeVar, Union, get_type_hints
+from logging import Logger
+from typing import Any, Final, Generic, Mapping, Optional, OrderedDict, Type, TypeVar, Union, \
+    get_type_hints
 
-from returns.maybe import Maybe, Nothing
+from reactivex import Observable, operators as ops
+from reactivex.subject import BehaviorSubject
+from returns.iterables import Fold
+from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, Result, ResultE, Success
+from validator_collection import not_empty
 
-from alleycat.common import MapReader
-from alleycat.lifecycle import RESULT_DISPOSED, RESULT_NOT_STARTED, Startable
+from alleycat.common import InvalidTypeError, LoggingSupport, MapReader, require_type
+from alleycat.lifecycle import Startable
 
 T = TypeVar("T")
 
 
-class PropertyHolder(Startable, ABC):
+class PropertyHolder(Startable, LoggingSupport, ABC):
     _prop_descriptors: Mapping[str, PropertyDescriptor]
 
     def __init__(self) -> None:
         super().__init__()
 
-        self._prop_values: ResultE[Dict[str, ResultE]] = RESULT_NOT_STARTED
+        self.__prop_values = BehaviorSubject[MapReader](MapReader(dict()))
 
-    def _do_start(self) -> None:
-        super()._do_start()
+    def _do_start(self, args: MapReader) -> ResultE[MapReader]:
+        self.logger.debug("Starting with arguments: %s", args)
+
+        start_args = super()._do_start(args)
 
         descriptors = self._prop_descriptors.values()
 
-        def validate(args: MapReader) -> Dict[str, ResultE]:
-            return dict(map(lambda d: (d.key, d.validate(args)), descriptors))
+        self._subscribe_until_dispose(self.__prop_values, on_error=self.logger.error)
 
-        self._prop_values = self.start_args.map(validate)
+        def validate(d: PropertyDescriptor, a: MapReader):
+            return d.from_args(a, self.logger).map(lambda v: (d.name, v))
+
+        def collect(a: MapReader):
+            return Fold \
+                .collect(map(lambda d: validate(d, a), descriptors), Success(())) \
+                .map(dict) \
+                .map(MapReader)
+
+        match start_args.bind(collect):
+            case Success(values):
+                self.__prop_values.on_next(values)
+
+                self.logger.info("Successfully started with arguments: %s", values)
+
+                return start_args
+            case Failure(e):
+                self.__prop_values.on_error(e)
+
+                self.logger.error("Failed to start with an error: %s", e, exc_info=e)
+
+                return Result.from_failure(e)
+
+    def on_property_change(self, name: str) -> Observable:
+        return self.__prop_values.pipe(
+            ops.filter(lambda v: name in v),
+            ops.map(lambda v: v[name]),
+            ops.distinct_until_changed())
+
+    @property
+    def _prop_values(self) -> MapReader:
+        self._check_started()
+        self._check_disposed()
+
+        return self.__prop_values.value
+
+    def _set_property(self, name: str, value: Any) -> None:
+        values = dict(**self._prop_values)
+        values[name] = value
+
+        self.__prop_values.on_next(MapReader(values))
 
     def __init_subclass__(cls, **kwargs) -> None:
         get_descriptor = partial(getattr, cls)
@@ -39,14 +86,18 @@ class PropertyHolder(Startable, ABC):
         entries = map(lambda d: (d.key, d.default_value.value_or(d.value_type)), descriptors)
 
         cls.args = OrderedDict[str, Any](entries)
-        cls._prop_descriptors = dict(map(lambda d: (d.key, d), descriptors))
+
+        cls._prop_descriptors = dict(map(lambda d: (d.name, d), descriptors))
 
         super().__init_subclass__(**kwargs)
 
     def dispose(self) -> None:
         super().dispose()
 
-        self._prop_values = RESULT_DISPOSED
+        if not self.__prop_values.exception:
+            self.__prop_values.on_completed()
+
+        self.__prop_values.dispose()
 
 
 class PropertyDescriptor(Generic[T]):
@@ -74,11 +125,37 @@ class PropertyDescriptor(Generic[T]):
         return self.__key
 
     @property
-    def return_type(self) -> Maybe[Type[...]]:
+    def return_type(self) -> Optional[Type[...]]:
         return self.__return_type
 
-    def validate(self, args: MapReader) -> ResultE[T]:
-        return args.require(self.key, self.value_type)
+    def from_args(self, args: MapReader, logger: Logger) -> ResultE[Any]:
+        if self.return_type == Maybe or self.return_type == Union:
+            match args.read(self.key, self.value_type).map(self.validate):
+                case Some(Success(v)):
+                    logger.debug("'%s'(%s) = '%s'", self.key, self.name, v)
+
+                    return Success(Some(v)) if self.return_type == Maybe else Success(v)
+                case Some(Failure(e)):
+                    logger.warning("Failed to parse '%s'(%s).", self.key, self.name, exc_info=e)
+
+                    return Success(Nothing) if self.return_type == Maybe else Success(None)
+                case _:
+                    logger.debug("'%s'(%s) = <empty>", self.key, self.name)
+
+                    return Success(Nothing if self.return_type == Maybe else None)
+
+        value = args.require(self.key, self.value_type).bind(self.validate)
+
+        match value:
+            case Success(v):
+                logger.debug("'%s'(%s) = '%s'", self.key, self.name, v)
+            case Failure(e):
+                logger.error("Failed to parse '%s'(%s).", self.key, self.name, exc_info=e)
+
+        return value
+
+    def validate(self, value: Any) -> ResultE[Any]:
+        return require_type(value, self.value_type)
 
     def __set_name__(self, owner: Type[...], name: str, *args, **kwargs) -> None:
         if not issubclass(owner, PropertyHolder):
@@ -94,27 +171,38 @@ class PropertyDescriptor(Generic[T]):
         except (KeyError, AttributeError):
             self.__return_type = self.value_type
 
-    def __get__(self, instance: Optional[PropertyHolder], owner: Type[PropertyHolder]):
+    def __get__(self, instance: Optional[PropertyHolder], owner: Type[PropertyHolder]) -> Any:
         if instance is None:
             return self
 
         assert self.key, "The descriptor is not associated with a class."
 
-        # noinspection PyProtectedMember
-        value = instance._prop_values.bind(lambda a: a[self.key])
+        try:
+            # noinspection PyProtectedMember
+            return instance._prop_values[self.name]
+        except KeyError:
+            raise AttributeError(f"'{self.name}' has failed to initialise. Please see the log for details.")
 
-        if self.return_type == Result:
-            return value
-        elif self.return_type == Maybe:
-            return value.map(Maybe.from_value).value_or(Nothing)
-        elif self.return_type == Union and self.value_type != Union:
-            return value.value_or(None)
-        else:
-            match value:
+    def __set__(self, instance: Optional[PropertyHolder], value: Any) -> None:
+        def validate_or_fail(v):
+            match self.validate(v):
                 case Success(v):
                     return v
                 case Failure(e):
                     raise e
+
+        if self.return_type == Maybe:
+            if not isinstance(value, Maybe):
+                raise InvalidTypeError(f"Expected a Maybe value but found '{value}' instead.")
+
+            validated = value.map(validate_or_fail)
+        elif self.return_type == Union and value is None:
+            validated = None
+        else:
+            validated = validate_or_fail(value)
+
+        # noinspection PyProtectedMember
+        not_empty(instance)._set_property(self.name, validated)
 
 
 def game_property(arg: Union[T, Type[T]]) -> PropertyDescriptor[T]:
