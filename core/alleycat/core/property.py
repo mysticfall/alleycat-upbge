@@ -105,12 +105,16 @@ class PropertyDescriptor(Generic[T]):
 
     default_value: Final[Maybe[T]]
 
+    read_only: Final[bool]
+
     def __init__(
             self,
             value_type: Type[T],
-            default_value: Maybe[T] = Nothing) -> None:
+            default_value: Maybe[T] = Nothing,
+            read_only: bool = False) -> None:
         self.value_type = value_type
         self.default_value = default_value
+        self.read_only = read_only
 
         self.__name: Optional[str] = None
         self.__key: Optional[str] = None
@@ -184,6 +188,9 @@ class PropertyDescriptor(Generic[T]):
             raise AttributeError(f"'{self.name}' has failed to initialise. Please see the log for details.")
 
     def __set__(self, instance: Optional[PropertyHolder], value: Any) -> None:
+        if self.read_only:
+            raise AttributeError(f"'{self.name}' is a read-only property.")
+
         def validate_or_fail(v):
             match self.validate(v):
                 case Success(v):
@@ -205,9 +212,12 @@ class PropertyDescriptor(Generic[T]):
         not_empty(instance)._set_property(self.name, validated)
 
 
-def game_property(arg: Union[T, Type[T]]) -> PropertyDescriptor[T]:
+def game_property(arg: Union[T, Type[T]], read_only: bool = False) -> PropertyDescriptor[T]:
     if isinstance(arg, type):
         # noinspection PyTypeChecker
         return PropertyDescriptor(arg)
     else:
-        return PropertyDescriptor(type(arg), default_value=Maybe.from_value(arg))
+        return PropertyDescriptor(
+            type(arg),
+            default_value=Maybe.from_value(arg),
+            read_only=read_only)

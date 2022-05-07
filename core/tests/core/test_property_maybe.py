@@ -38,9 +38,9 @@ class TestComp(BaseComponent):
 
     bool_value: Maybe[bool] = game_property(True)
 
-    int_value: Maybe[int] = game_property(123)
+    int_value: Maybe[int] = game_property(123, read_only=False)
 
-    float_value: Maybe[float] = game_property(1.2)
+    float_value: Maybe[float] = game_property(1.2, read_only=True)
 
     object_value: Maybe[KX_GameObject] = game_property(KX_GameObject)
 
@@ -296,3 +296,21 @@ def test_inheritance():
 
     assert events == [Some("def"), Nothing, Some(321), Nothing, Some("GHI"), Nothing]
     assert errors == []
+
+
+def test_read_only():
+    args = OrderedDict((
+        ("String Value", "DEF"),
+        ("Bool Value", False),
+        ("Int Value", 321),
+        ("Float Value", 1.5),
+        ("Object Value", KX_GameObject()),
+        ("Data Value", Camera()),
+    ))
+
+    comp = TestComp()
+
+    comp.start(args)
+
+    with raises(AttributeError):
+        comp.float_value = Some(2.0)

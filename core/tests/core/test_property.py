@@ -37,9 +37,9 @@ class TestComp(BaseComponent):
 
     bool_value: bool = game_property(True)
 
-    int_value: int = game_property(123)
+    int_value: int = game_property(123, read_only=False)
 
-    float_value: float = game_property(1.2)
+    float_value: float = game_property(1.2, read_only=True)
 
     object_value: KX_GameObject = game_property(KX_GameObject)
 
@@ -281,3 +281,21 @@ def test_inheritance():
 
     assert events == ["def", "ghi", 321, "DEF", "GHI", 123]
     assert errors == []
+
+
+def test_read_only():
+    args = OrderedDict((
+        ("String Value", "DEF"),
+        ("Bool Value", False),
+        ("Int Value", 321),
+        ("Float Value", 1.5),
+        ("Object Value", KX_GameObject()),
+        ("Data Value", Camera()),
+    ))
+
+    comp = TestComp()
+
+    comp.start(args)
+
+    with raises(AttributeError):
+        comp.float_value = 2.0
